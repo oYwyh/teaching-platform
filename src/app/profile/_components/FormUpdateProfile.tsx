@@ -26,7 +26,11 @@ export default function FormUpdateProfile({
     email: user.email,
     phone: user.phone,
     parentPhone: user.parentPhone,
+    region: user.region,
     governorate: user.governorate,
+    year: user.year,
+    exam: user.exam,
+    type: user.type,
   })
 
   const form = useForm<TUpdateProfileSchema>({
@@ -38,7 +42,11 @@ export default function FormUpdateProfile({
       email: user.email,
       phone: user.phone,
       parentPhone: user.parentPhone,
+      region: user.region,
       governorate: user.governorate,
+      year: user.year,
+      exam: user.exam,
+      type: user.type,
     },
   });
 
@@ -47,6 +55,7 @@ export default function FormUpdateProfile({
       form.setValue(key as keyof TUpdateProfileSchema, value);
     });
   }, [userData])
+
 
   const onSubmit = async (data: { [key: string]: string } & TUpdateProfileSchema) => {
     let userFields = Object.keys(userData).filter(key => key !== 'id' && key !== 'role') as (keyof TUpdateProfileSchema)[];
@@ -96,7 +105,11 @@ export default function FormUpdateProfile({
         email: data.email ? data.email : userData.email,
         phone: data.phone ? data.phone : userData.phone,
         parentPhone: data.parentPhone ? data.parentPhone : userData.parentPhone,
+        region: data.region ? data.region : userData.region,
         governorate: data.governorate ? data.governorate : userData.governorate,
+        year: data.year ? data.year : userData.year,
+        exam: data.exam ? data.exam : userData.exam,
+        type: data.type ? data.type : userData.type,
       })
       fieldsNotToCompare = []
       fieldsToCompare = []
@@ -119,11 +132,23 @@ export default function FormUpdateProfile({
         </div>
         <div className="flex flex-row gap-3">
           <FormField form={form} name="phone" />
-          <FormField form={form} name="parentPhone" />
+          {user.type == 'school' && (
+            <FormField form={form} name="parentPhone" />
+          )}
         </div>
         <div className="flex flex-row gap-3 pb-2">
-          <FormField form={form} name="governorate" select='governorate' />
+          <FormField form={form} name="region" disabled />
+          <FormField form={form} name="governorate" disabled />
         </div>
+        <div className="flex flex-row gap-3 pb-2">
+          {user.type == 'school' && (
+            <FormField form={form} name="year" disabled />
+          )}
+          {user.type == 'exam' && (
+            <FormField form={form} name="exam" disabled />
+          )}
+        </div>
+        <FormField form={form} name="type" disabled type='hidden' />
         <Button className="w-[100%]" type="submit">Update</Button>
         <FormMessage>{error}</FormMessage>
       </form>

@@ -9,10 +9,10 @@ import { hash } from "@node-rs/argon2";
 import { uniqueColumnsValidations } from "@/actions/index.actions";
 
 export const updateProfile = async (data: TUpdateProfileSchema) => {
-    const { id, firstname, lastname, email, phone, parentPhone, governorate } = data;
+    const { id, firstname, lastname, email, phone, parentPhone, year, region, governorate } = data;
 
     // Check if the email exists and belongs to a different user
-    const result = await uniqueColumnsValidations(data);
+    const result = await uniqueColumnsValidations(data, id);
     if (result?.error) return { error: result?.error };
 
     // Update the user with the new username and email
@@ -23,6 +23,8 @@ export const updateProfile = async (data: TUpdateProfileSchema) => {
         phone: phone,
         parentPhone: parentPhone,
         governorate: governorate,
+        region: region,
+        year: year,
     }).where(sql`${userTable.id} = ${id}`);
 
     return {

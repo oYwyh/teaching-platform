@@ -49,7 +49,7 @@ export default function AuthPage() {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
                         <FormField form={form} name='credential' />
-                        <Button className="mt-2" type='submit' >Submit</Button>
+                        <Button className="mt-2 w-full" type='submit' >Submit</Button>
                     </form>
                 </Form>
             )}

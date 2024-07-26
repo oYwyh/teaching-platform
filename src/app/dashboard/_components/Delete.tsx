@@ -12,13 +12,15 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Dispatch, SetStateAction, useState } from "react";
-import { deleteUser } from "@/actions/dashboard.actions";
-export default function Delete({ id, setPopOpen }: { id: string | number, setPopOpen: Dispatch<SetStateAction<boolean | undefined>>; }) {
+import { deleteAction } from "@/actions/index.actions";
+import { TTables } from "@/types/index.type";
+
+export default function Delete({ id, table, setPopOpen }: { id: string | number, table: TTables, setPopOpen: Dispatch<SetStateAction<boolean | undefined>>; }) {
 
     const [open, setOpen] = useState<boolean>()
 
-    const onSubmit = async (id: string | number) => {
-        await deleteUser(id);
+    const onSubmit = async () => {
+        await deleteAction(id, table);
         setOpen(false)
         setPopOpen(false)
     }
@@ -36,7 +38,7 @@ export default function Delete({ id, setPopOpen }: { id: string | number, setPop
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <Button variant='destructive' onClick={() => onSubmit(id)}>
+                    <Button variant='destructive' onClick={onSubmit}>
                         Delete
                     </Button>
                 </AlertDialogFooter>

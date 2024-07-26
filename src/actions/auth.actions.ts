@@ -3,15 +3,16 @@
 import { uniqueColumnsValidations } from '@/actions/index.actions';
 import { lucia, validateRequest } from '@/lib/auth';
 import db from '@/lib/db';
-import { userTable } from '@/lib/db/schema';
+import { governorateTable, regionTable, userTable } from '@/lib/db/schema';
 import { TCheckSchema, TLoginSchema, TRegisterSchema } from '@/schemas/auth.schema'
 import { columnsRegex, TUser } from '@/types/index.type';
 import { hash, verify } from "@node-rs/argon2";
 import { error } from 'console';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { generateIdFromEntropySize } from 'lucia';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { string } from 'zod';
 
 export const check = async (data: TCheckSchema) => {
 
@@ -61,7 +62,7 @@ export const check = async (data: TCheckSchema) => {
 }
 
 export const register = async (data: TRegisterSchema) => {
-    const { firstname, lastname, email, phone, parentPhone, governorate, password } = data
+    const { firstname, lastname, email, phone, parentPhone, region, governorate, exam, type, year, password } = data
 
     const unqiueValidation = await uniqueColumnsValidations({ email, phone, parentPhone })
 
@@ -81,15 +82,18 @@ export const register = async (data: TRegisterSchema) => {
 
     const userId = generateIdFromEntropySize(10); // 16 characters long
 
-    // TODO: check if username is already used
     await db.insert(userTable).values({
         id: userId,
         firstname,
         lastname,
         email,
         phone,
-        parentPhone,
+        parentPhone: parentPhone || null, // Handle optional field
+        region,
         governorate,
+        exam,
+        year,
+        type,
         password: passwordHash,
     })
 
@@ -108,18 +112,18 @@ export async function login(data: TLoginSchema) {
     });
 
     if (existingUser) {
-        const validPassword = await verify(existingUser.password, password, {
-            memoryCost: 19456,
-            timeCost: 2,
-            outputLen: 32,
-            parallelism: 1,
-        });
+        // const validPassword = await verify(existingUser.password, password, {
+        //     memoryCost: 19456,
+        //     timeCost: 2,
+        //     outputLen: 32,
+        //     parallelism: 1,
+        // });
 
-        if (!validPassword) {
-            return {
-                error: 'Invalid Password'
-            }
-        }
+        // if (!validPassword) {
+        //     return {
+        //         error: 'Invalid Password'
+        //     }
+        // }
 
         const session = await lucia.createSession(existingUser.id, {});
         const sessionCookie = lucia.createSessionCookie(session.id);

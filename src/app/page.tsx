@@ -14,17 +14,20 @@ export default async function Home() {
           <pre>{JSON.stringify(user, null, 2)}</pre>
           <div className="flex flex-row gap-3">
             {user.role == 'admin' && <Link href='/dashboard'><Button>dashboard</Button></Link>}
+            <Link href='/profile'><Button>profile</Button></Link>
             <form action={logout}>
               <Button>Sign out</Button>
             </form>
           </div>
         </>
       ) : (
-        <Link href='auth'>
-          <Button>
-            Auth
-          </Button>
-        </Link>
+        <>
+          <Link href='auth'>
+            <Button>
+              Auth
+            </Button>
+          </Link>
+        </>
       )}
     </>
   )

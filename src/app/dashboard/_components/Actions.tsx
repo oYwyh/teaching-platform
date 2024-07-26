@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
@@ -6,7 +7,9 @@ import { useState } from "react";
 import Delete from "@/app/dashboard/_components/Delete";
 import { Row } from "@tanstack/react-table";
 import Link from "next/link";
-import Edit from "@/app/dashboard/_components/Edit";
+import EditRegion from "@/app/dashboard/regions/Edit";
+import EditStudent from "@/app/dashboard/students/Edit";
+import EditExam from "@/app/dashboard/exams/Edit";
 
 export default function Actions({ row, rowData }: { row: Row<any>, rowData: any }) {
     const [open, setOpen] = useState<boolean>();
@@ -22,15 +25,43 @@ export default function Actions({ row, rowData }: { row: Row<any>, rowData: any 
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel >Actions</DropdownMenuLabel>
                 <div className="flex flex-col gap-2 w-full">
-                    <Edit
-                        userId={row.getValue('id')}
-                        userData={rowData}
-                        setPopOpen={setOpen}
-                    />
-                    <Delete
-                        id={row.getValue('id')}
-                        setPopOpen={setOpen}
-                    />
+                    {rowData.table == 'user' && (
+                        <>
+                            <EditStudent
+                                id={row.getValue('id')}
+                                rowData={rowData}
+                                setPopOpen={setOpen}
+                            />
+                            <Delete
+                                id={row.getValue('id')}
+                                table="user"
+                                setPopOpen={setOpen}
+                            />
+                        </>
+                    )}
+                    {rowData.table == 'region' && (
+                        <>
+                            <EditRegion
+                                id={row.getValue('id')}
+                                rowData={rowData}
+                                setPopOpen={setOpen}
+                            />
+                            <Delete
+                                id={row.getValue('id')}
+                                table="region"
+                                setPopOpen={setOpen}
+                            />
+                        </>
+                    )}
+                    {rowData.table == 'exam' && (
+                        <>
+                            <Delete
+                                id={row.getValue('id')}
+                                table="exam"
+                                setPopOpen={setOpen}
+                            />
+                        </>
+                    )}
                 </div>
             </DropdownMenuContent>
         </DropdownMenu >

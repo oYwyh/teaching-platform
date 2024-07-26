@@ -27,8 +27,12 @@ export const lucia = new Lucia(adapter, {
             email: attributes.email,
             phone: attributes.phone,
             parentPhone: attributes.parentPhone,
+            region: attributes.region,
+            year: attributes.year,
             governorate: attributes.governorate,
+            exam: attributes.exam,
             picture: attributes.picture,
+            type: attributes.type,
             role: attributes.role,
         };
     },

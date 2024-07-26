@@ -1,9 +1,8 @@
 import { DataTable } from "@/components/ui/table/DataTable";
 import db from "@/lib/db";
-// import AddPage from "./Add";
 import { validateRequest } from "@/lib/auth";
 import { StudentsTableColumns } from "@/app/dashboard/_components/columns";
-import Add from "@/app/dashboard/_components/Add";
+import Add from "@/app/dashboard/students/Add";
 
 async function getData() {
     const users = await db.query.userTable.findMany({
@@ -23,7 +22,12 @@ export default async function StudentsPage() {
     return (
         <div>
             <Add />
-            <DataTable columns={StudentsTableColumns} data={data} hiddenColumns={['id', 'role']} />
+            <DataTable
+                columns={StudentsTableColumns}
+                data={data}
+                hiddenColumns={['id', 'table']}
+                restrictedColumns={['table']}
+            />
         </div>
     )
 }

@@ -93,7 +93,7 @@ export function DataTable<TData, TValue>({
             }}
             className="max-w-sm"
           />
-          {/* <DataTableToolbar table={table} /> */}
+          <DataTableToolbar table={table} />
         </div>
         <DataTableViewOptions table={table} restrictedColumns={restrictedColumns} />
 
