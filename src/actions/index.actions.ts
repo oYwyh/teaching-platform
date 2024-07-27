@@ -1,22 +1,37 @@
 'use server'
 
 import db from "@/lib/db";
-import { columnsRegex } from "@/types/index.type";
+import { columnsRegex, TFullUserData } from "@/types/index.type";
 import { eq, sql } from "drizzle-orm";
-import { examTable, governorateTable, regionTable, userTable, yearTable } from "@/lib/db/schema";
+import {
+    examTable,
+    governorateTable,
+    regionTable,
+    userTable,
+    yearTable,
+    roleTable,
+    studentTable,
+    instructorTable,
+    courseTable
+
+} from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
+import { validateRequest } from "@/lib/auth";
 export const uniqueColumnsValidations = async (data: any, userId?: string) => {
-    const columns = [
-        data.email && { column: 'email', value: data?.email, regex: columnsRegex.email },
-        data.phone && { column: 'phone', value: data?.phone, regex: columnsRegex.phone },
-        data.parentPhone && { column: 'parentPhone', value: data?.parentPhone, regex: columnsRegex.phone },
+    const userColumns = [
+        data.email && { column: 'email', value: data.email, regex: columnsRegex.email },
+        data.phone && { column: 'phone', value: data.phone, regex: columnsRegex.phone },
+    ].filter(Boolean) as { column: string; value: string; regex: RegExp; }[];
+
+    const studentColumns = [
+        data.parentPhone && { column: 'parentPhone', value: data.parentPhone, regex: columnsRegex.phone },
     ].filter(Boolean) as { column: string; value: string; regex: RegExp; }[];
 
     const errors: Record<string, string> = {};
 
-    for (const { column, value, regex } of columns) {
+    // Check unique constraints for userTable
+    for (const { column, value, regex } of userColumns) {
         const exist = await db.query.userTable.findFirst({
             columns: { [column]: true },
             where: (userTable: { [key: string]: any }, { eq, and, not }) => {
@@ -37,26 +52,49 @@ export const uniqueColumnsValidations = async (data: any, userId?: string) => {
         if (!regex.test(value)) {
             errors[column] = `${column.charAt(0).toUpperCase() + column.slice(1)} is invalid`;
         }
+    }
+
+    // Check unique constraints for studentTable
+    for (const { column, value, regex } of studentColumns) {
+        const exist = await db.query.studentTable.findFirst({
+            columns: { [column]: true },
+            where: (studentTable: { [key: string]: any }, { eq, and, not }) => {
+                if (userId) {
+                    return and(
+                        eq(studentTable[column], value),
+                        not(eq(studentTable.userId, userId))
+                    );
+                } else {
+                    return eq(studentTable[column], value);
+                }
+            },
+        });
+
+        if (exist) {
+            errors[column] = `${column.charAt(0).toUpperCase() + column.slice(1)} already exists`;
+        }
+        if (!regex.test(value)) {
+            errors[column] = `${column.charAt(0).toUpperCase() + column.slice(1)} is invalid`;
+        }
 
         // Additional check for phone in parentPhone and vice versa
-        if (column === 'phone' || column === 'parentPhone') {
-            const otherColumn = column === 'phone' ? 'parentPhone' : 'phone';
+        if (column === 'parentPhone') {
             const otherExist = await db.query.userTable.findFirst({
-                columns: { [otherColumn]: true },
+                columns: { phone: true },
                 where: (userTable: { [key: string]: any }, { eq, and, not }) => {
                     if (userId) {
                         return and(
-                            eq(userTable[otherColumn], value),
+                            eq(userTable.phone, value),
                             not(eq(userTable.id, userId))
                         );
                     } else {
-                        return eq(userTable[otherColumn], value);
+                        return eq(userTable.phone, value);
                     }
                 },
             });
 
             if (otherExist) {
-                errors[column] = `${column.charAt(0).toUpperCase() + column.slice(1)} already exists as ${otherColumn}`;
+                errors[column] = `${column.charAt(0).toUpperCase() + column.slice(1)} already exists as phone`;
             }
         }
     }
@@ -71,12 +109,15 @@ export const uniqueColumnsValidations = async (data: any, userId?: string) => {
 
 
 
+
 const tablesMap = {
     user: userTable,
     region: regionTable,
     governorate: governorateTable,
     year: yearTable,
-    exam: examTable
+    exam: examTable,
+    instructor: instructorTable,
+    course: courseTable,
 };
 
 
@@ -217,4 +258,46 @@ export const getExams = async () => {
     console.log(formattedExams)
 
     return formattedExams;
+};
+
+// src/lib/serverActions/getUserData.ts
+
+export const getUser = async (): Promise<TFullUserData | null> => {
+    const { user, session } = await validateRequest();
+    if (!user) {
+        return null;
+    }
+
+    // Fetch user role
+    const role = await db.query.roleTable.findFirst({ where: (roleTable, { eq }) => eq(roleTable.userId, user.id) });
+    const userRole = role?.role ?? 'user';
+
+    if (userRole === 'user') {
+        // Fetch student-specific data
+        const student = await db.query.studentTable.findFirst({ where: (studentTable, { eq }) => eq(studentTable.userId, user.id) });
+        return {
+            ...user,
+            role: userRole,
+            exam: student?.exam ?? undefined,
+            year: student?.year ?? undefined,
+            parentPhone: student?.parentPhone ?? undefined,
+            type: student?.type,
+        };
+    } else if (userRole === 'instructor') {
+        // Fetch instructor-specific data
+        const instructor = await db.query.instructorTable.findFirst({ where: (instructorTable, { eq }) => eq(instructorTable.userId, user.id) });
+        return {
+            ...user,
+            role: userRole,
+            bio: instructor?.bio,
+            qualifications: instructor?.qualifications,
+            experience: instructor?.experience,
+            specialty: instructor?.specialty,
+            contactInfo: instructor?.contactInfo ?? undefined,
+            officeLocation: instructor?.officeLocation ?? undefined,
+        };
+    } else {
+        // Just return user data for other roles (e.g., admin, user)
+        return { ...user, role: userRole };
+    }
 };

@@ -1,24 +1,22 @@
 import { DataTable } from "@/components/ui/table/DataTable";
 import db from "@/lib/db";
 import { validateRequest } from "@/lib/auth";
-import { StudentsTableColumns } from "@/app/dashboard/_components/columns";
-import Add from "@/app/dashboard/students/Add";
-import { roleTable, studentTable, userTable } from "@/lib/db/schema";
+import { InstructorTableColumns, StudentsTableColumns } from "@/app/dashboard/_components/columns";
+import Add from "@/app/dashboard/instructors/Add";
+import { instructorTable, roleTable, userTable } from "@/lib/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 
 async function getData() {
     const joinedData = await db.select()
         .from(userTable)
         .leftJoin(roleTable, eq(roleTable.userId, userTable.id))
-        .leftJoin(studentTable, eq(studentTable.userId, userTable.id))
-        .where(eq(roleTable.role, 'user'));
+        .leftJoin(instructorTable, eq(instructorTable.userId, userTable.id))
+        .where(eq(roleTable.role, 'instructor'));
 
     const users = joinedData.map(item => ({
         ...item.user,
-        year: item.student?.year,
-        exam: item.student?.exam,
-        parentPhone: item.student?.parentPhone,
-        type: item.student?.type
+        bio: item.instructor?.bio,
+        specialty: item.instructor?.specialty,
     }));
 
     return users;
@@ -33,7 +31,7 @@ export default async function StudentsPage() {
         <div>
             <Add />
             <DataTable
-                columns={StudentsTableColumns}
+                columns={InstructorTableColumns}
                 data={data}
                 hiddenColumns={['id', 'table']}
                 restrictedColumns={['table']}

@@ -11,7 +11,7 @@ export const registerSchema = z.object({
     firstname: z.string().min(1, "Firstname is required"),
     lastname: z.string().min(1, "Lastname is required"),
     email: z.string().email(),
-    phone: z.string(),
+    phone: z.string().min(1, "Phone is required"),
     parentPhone: z.string().optional(),
     year: z.string().optional(),
     region: z.string(),

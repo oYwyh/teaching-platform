@@ -12,7 +12,9 @@ export const updateProfileSchema = z.object({
     governorate: z.string().optional(),
     year: z.string().optional().or(z.literal(null)),
     exam: z.string().optional(),
-    type: z.enum(['school', 'exam']),
+    bio: z.string().optional(),
+    specialty: z.string().optional(),
+    type: z.enum(['school', 'exam']).or(z.string().optional()),
 }).superRefine((data, ctx) => {
     if (data.type === 'school' && !data.parentPhone) {
         ctx.addIssue({

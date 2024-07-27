@@ -8,15 +8,17 @@ import { useForm } from "react-hook-form";
 import { updateProfileSchema, TUpdateProfileSchema } from "@/schemas/profile.schema";
 import { useEffect, useState } from "react";
 import { updateProfile } from "@/actions/profile.actions";
-import { TUser } from '@/types/index.type';
+import { TFullUserData, TUser } from '@/types/index.type';
+import { redirect } from 'next/navigation';
 
 type TFormUpdateProfile = {
-  user: TUser
+  user: TFullUserData
 }
 
 export default function FormUpdateProfile({
   user
 }: TFormUpdateProfile) {
+  if (!user) redirect('/auth')
 
   const [error, setError] = useState<string>()
 
@@ -30,7 +32,9 @@ export default function FormUpdateProfile({
     governorate: user.governorate,
     year: user.year,
     exam: user.exam,
-    type: user.type,
+    type: user.type as "school", // Add type assertion here
+    bio: user.bio,
+    specialty: user.specialty
   })
 
   const form = useForm<TUpdateProfileSchema>({
@@ -47,6 +51,8 @@ export default function FormUpdateProfile({
       year: user.year,
       exam: user.exam,
       type: user.type,
+      bio: user.bio,
+      specialty: user.specialty
     },
   });
 
@@ -57,7 +63,7 @@ export default function FormUpdateProfile({
   }, [userData])
 
 
-  const onSubmit = async (data: { [key: string]: string } & TUpdateProfileSchema) => {
+  const onSubmit = async (data: { [key: string]: string | null } & TUpdateProfileSchema) => {
     let userFields = Object.keys(userData).filter(key => key !== 'id' && key !== 'role') as (keyof TUpdateProfileSchema)[];
     let fieldsNotToCompare: string[] = [];
     let fieldsToCompare: string[] = [];
@@ -110,6 +116,8 @@ export default function FormUpdateProfile({
         year: data.year ? data.year : userData.year,
         exam: data.exam ? data.exam : userData.exam,
         type: data.type ? data.type : userData.type,
+        bio: data.bio ? data.bio : userData.bio,
+        specialty: data.specialty ? data.specialty : userData.specialty
       })
       fieldsNotToCompare = []
       fieldsToCompare = []
@@ -146,6 +154,16 @@ export default function FormUpdateProfile({
           )}
           {user.type == 'exam' && (
             <FormField form={form} name="exam" disabled />
+          )}
+        </div>
+        <div className="flex flex-row gap-3 pb-2">
+          {user.role == 'instructor' && (
+            <FormField form={form} name="bio" textarea disabled />
+          )}
+        </div>
+        <div className="flex flex-row gap-3 pb-2">
+          {user.role == 'instructor' && (
+            <FormField form={form} name="specialty" disabled />
           )}
         </div>
         <FormField form={form} name="type" disabled type='hidden' />

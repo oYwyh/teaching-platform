@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { integer, pgEnum, pgTable, PgTimestampBuilderInitial, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { decimal, integer, pgEnum, pgTable, PgTimestampBuilderInitial, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 export const timestamps = (): {
     createdAt: PgTimestampBuilderInitial<"createdAt">;
@@ -25,23 +25,31 @@ export const userTable = pgTable("user", {
     lastname: text("lastname").notNull(),
     email: text("email").unique().notNull(),
     phone: text("phone").unique().notNull(),
-    parentPhone: text("parentPhone").unique(),
     region: text("region").notNull(),
     governorate: text("governorate").notNull(),
-    year: text("year"),
-    exam: text("exam"),
-    picture: text("picture").default('default.jpg').notNull(),
     password: text("password").notNull(),
-    type: UserTypes("type").notNull(),
+    picture: text("picture").default('default.jpg').notNull(),
     ...timestamps(),
 });
 
-export const userRolesTable = pgTable("userRoles", {
+export const roleTable = pgTable("role", {
     id: serial("id").primaryKey(),
     userId: text("userId")
         .notNull()
         .references(() => userTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
-    role: UserRoles("role").notNull(),
+    role: UserRoles("role").default("user").notNull(),
+    ...timestamps(),
+});
+
+export const studentTable = pgTable("student", {
+    id: serial("id").primaryKey(),
+    userId: text("userId")
+        .notNull()
+        .references(() => userTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    year: text("year"),
+    exam: text("exam"),
+    parentPhone: text("parentPhone").unique(),
+    type: UserTypes("type").notNull(),
     ...timestamps(),
 });
 
@@ -51,12 +59,7 @@ export const instructorTable = pgTable("instructor", {
         .notNull()
         .references(() => userTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     bio: text("bio").notNull(),
-    qualifications: text("qualifications").notNull(),
-    experience: integer("experience").notNull(),
-    specialization: text("specialization").notNull(),
-    photo: text("photo").default('default.jpg').notNull(),
-    contactInfo: text("contactInfo"),
-    officeLocation: text("officeLocation"),
+    specialty: text("specialty").notNull(),
     ...timestamps(),
 });
 
@@ -85,26 +88,30 @@ export const examTable = pgTable("exam", {
     ...timestamps(),
 });
 
-// export const CourseContexts = pgEnum("courseContexts", ["school", "exam"]);
 
-// export const courseTable = pgTable("course", {
-//     id: serial("id").primaryKey(),
-//     title: text("title").notNull(),
-//     description: text("description").notNull(),
-//     instructorId: integer("instructorId").references(() => instructorTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
-//     duration: text("duration").notNull(),
-//     startDate: timestamp("startDate", { withTimezone: true, mode: "date" }).notNull(),
-//     endDate: timestamp("endDate", { withTimezone: true, mode: "date" }).notNull(),
-//     credits: integer("credits").notNull(),
-//     prerequisites: text("prerequisites"),
-//     enrollmentLimit: integer("enrollmentLimit"),
-//     category: text("category").notNull(),
-//     regionId: integer("regionId").references(() => regionTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
-//     yearId: integer("yearId").references(() => yearTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
-//     examId: integer("examId").references(() => examTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
-//     context: CourseContexts("context").notNull(),
-//     ...timestamps(),
-// });
+
+export const CourseContexts = pgEnum("courseContexts", ["school", "exam"]);
+export const CourseStatus = pgEnum("courseStatus", ["published", "unpublished", 'scheduled']);
+
+export const courseTable = pgTable("course", {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    instructorId: integer("instructorId").references(() => instructorTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+    price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+    currency: text("currency").notNull(),
+    category: text("category").notNull(),
+    enrolledStudents: integer('enrolledStudents').default(0).notNull(),
+    regionId: integer("regionId").references(() => regionTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    yearId: integer("yearId").references(() => yearTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    examId: integer("examId").references(() => examTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    context: CourseContexts("context").notNull(),
+    status: CourseStatus('status').default('published').notNull(),
+    releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+    scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
+    scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
+});
 
 export const sessionTable = pgTable("session", {
     id: text("id").primaryKey(),
@@ -117,17 +124,26 @@ export const sessionTable = pgTable("session", {
     }).notNull()
 });
 
+
 // relations
 
-export const userRelations = relations(userTable, ({ many }) => ({
-    roles: many(userRolesTable),
-}));
-
-export const userRolesRelations = relations(userRolesTable, ({ one }) => ({
+export const roleRelations = relations(roleTable, ({ one }) => ({
     user: one(userTable, {
-        fields: [userRolesTable.userId],
+        fields: [roleTable.userId],
         references: [userTable.id],
     })
+}));
+
+export const userRelations = relations(userTable, ({ one, many }) => ({
+    roles: many(roleTable),
+    instructor: one(instructorTable, {
+        fields: [userTable.id],
+        references: [instructorTable.userId],
+    }),
+    student: one(studentTable, {
+        fields: [userTable.id],
+        references: [studentTable.userId],
+    }),
 }));
 
 export const instructorRelations = relations(instructorTable, ({ one, many }) => ({
@@ -135,10 +151,10 @@ export const instructorRelations = relations(instructorTable, ({ one, many }) =>
         fields: [instructorTable.userId],
         references: [userTable.id],
     }),
-    // courses: one(courseTable, {
-    //     fields: [instructorTable.id],
-    //     references: [courseTable.instructorId],
-    // }),
+    courses: one(courseTable, {
+        fields: [instructorTable.id],
+        references: [courseTable.instructorId],
+    }),
 }));
 
 export const regionRalations = relations(regionTable, ({ one, many }) => ({
@@ -160,17 +176,21 @@ export const yearRelations = relations(yearTable, ({ one, many }) => ({
     })
 }))
 
-// export const courseRelations = relations(courseTable, ({ one }) => ({
-//     region: one(regionTable, {
-//         fields: [courseTable.regionId],
-//         references: [regionTable.id]
-//     }),
-//     year: one(yearTable, {
-//         fields: [courseTable.yearId],
-//         references: [yearTable.id]
-//     }),
-//     exam: one(examTable, {
-//         fields: [courseTable.examId],
-//         references: [examTable.id]
-//     })
-// }))
+export const courseRelations = relations(courseTable, ({ one }) => ({
+    instructor: one(instructorTable, {
+        fields: [courseTable.instructorId],
+        references: [instructorTable.id]
+    }),
+    region: one(regionTable, {
+        fields: [courseTable.regionId],
+        references: [regionTable.id]
+    }),
+    year: one(yearTable, {
+        fields: [courseTable.yearId],
+        references: [yearTable.id]
+    }),
+    exam: one(examTable, {
+        fields: [courseTable.examId],
+        references: [examTable.id]
+    })
+}))

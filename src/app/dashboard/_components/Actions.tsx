@@ -9,7 +9,7 @@ import { Row } from "@tanstack/react-table";
 import Link from "next/link";
 import EditRegion from "@/app/dashboard/regions/Edit";
 import EditStudent from "@/app/dashboard/students/Edit";
-import EditExam from "@/app/dashboard/exams/Edit";
+import EditInstructor from "@/app/dashboard/instructors/Edit";
 
 export default function Actions({ row, rowData }: { row: Row<any>, rowData: any }) {
     const [open, setOpen] = useState<boolean>();
@@ -35,6 +35,20 @@ export default function Actions({ row, rowData }: { row: Row<any>, rowData: any 
                             <Delete
                                 id={row.getValue('id')}
                                 table="user"
+                                setPopOpen={setOpen}
+                            />
+                        </>
+                    )}
+                    {rowData.table == 'instructor' && (
+                        <>
+                            <EditInstructor
+                                id={row.getValue('id')}
+                                rowData={rowData}
+                                setPopOpen={setOpen}
+                            />
+                            <Delete
+                                id={row.getValue('id')}
+                                table="instructor"
                                 setPopOpen={setOpen}
                             />
                         </>

@@ -15,10 +15,9 @@ export type BaseColumnsTypes = {
     nationalId: string;
     age: string;
     gender: string;
-    role: string;
 }
 
-export const baseColumns = ['id', 'firstname', 'lastname', 'email', 'phone', 'parentPhone', 'region', 'governorate', 'exam', 'year', 'role']
+export const baseColumns = ['id', 'firstname', 'lastname', 'email', 'phone', 'region', 'governorate']
 
 export const SelectTableColumn = [
     {

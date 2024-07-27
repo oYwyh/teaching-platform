@@ -14,6 +14,10 @@ interface IYears {
     }[];
 }
 
+interface ICurrencyLocales {
+    [key: string]: { locale: string; currency: string; };
+}
+
 export const regions = [
     { labelAr: 'مصر', labelEn: 'Egypt', value: 'egypt' },
     { labelAr: 'الكويت', labelEn: 'Kuwait', value: 'kuwait' },
@@ -40,6 +44,35 @@ export const regions = [
     { labelAr: 'الصين', labelEn: 'China', value: 'china' },
     { labelAr: 'اليابان', labelEn: 'Japan', value: 'japan' }
 ];
+
+
+export const currencyLocales: ICurrencyLocales = {
+    egypt: { locale: 'en-EG', currency: 'EGP' },
+    kuwait: { locale: 'en-KW', currency: 'KWD' },
+    saudi_arabia: { locale: 'en-SA', currency: 'SAR' },
+    uae: { locale: 'en-AE', currency: 'AED' },
+    qatar: { locale: 'en-QA', currency: 'QAR' },
+    bahrain: { locale: 'en-BH', currency: 'BHD' },
+    oman: { locale: 'en-OM', currency: 'OMR' },
+    iraq: { locale: 'en-IQ', currency: 'IQD' },
+    jordan: { locale: 'en-JO', currency: 'JOD' },
+    lebanon: { locale: 'en-LB', currency: 'LBP' },
+    syria: { locale: 'en-SY', currency: 'SYP' },
+    yemen: { locale: 'en-YE', currency: 'YER' },
+    palestine: { locale: 'en-PS', currency: 'ILS' },
+    turkey: { locale: 'tr-TR', currency: 'TRY' },
+    united_states: { locale: 'en-US', currency: 'USD' },
+    united_kingdom: { locale: 'en-GB', currency: 'GBP' },
+    canada: { locale: 'en-CA', currency: 'CAD' },
+    australia: { locale: 'en-AU', currency: 'AUD' },
+    germany: { locale: 'de-DE', currency: 'EUR' },
+    france: { locale: 'fr-FR', currency: 'EUR' },
+    italy: { locale: 'it-IT', currency: 'EUR' },
+    spain: { locale: 'es-ES', currency: 'EUR' },
+    china: { locale: 'zh-CN', currency: 'CNY' },
+    japan: { locale: 'ja-JP', currency: 'JPY' },
+};
+
 
 export const governorates: IGovernorates = {
     egypt: [
@@ -591,7 +624,42 @@ export const exams = [
     { labelAr: 'Trinity GESE', labelEn: 'Trinity GESE', value: 'trinity_gese' }
 ];
 
+export const schoolSubjects = [
+    // arabic, english, math, sience, bology, chemistry, physics, geography, history, geology, religion
+    { labelAr: 'عربي', labelEn: 'Arabic', value: 'arabic' },
+    { labelAr: 'انجليزي', labelEn: 'English', value: 'english' },
+    { labelAr: 'رياضيات', labelEn: 'Math', value: 'math' },
+    { labelAr: 'علوم', labelEn: 'Sience', value: 'sience' },
+    { labelAr: 'أحياء', labelEn: 'Bology', value: 'bology' },
+    { labelAr: 'الكيمياء', labelEn: 'Chemistry', value: 'chemistry' },
+    { labelAr: 'الفيزياء', labelEn: 'Physics', value: 'physics' },
+    { labelAr: 'الجغرافيا', labelEn: 'Geography', value: 'geography' },
+    { labelAr: 'التاريخ', labelEn: 'History', value: 'history' },
+    { labelAr: 'الجيولوجيا', labelEn: 'Geology', value: 'geology' },
+    { labelAr: 'الدين', labelEn: 'Religion', value: 'religion' },
+]
+
 export const studentTypes = [
     { labelAr: 'طالب مدرسي', labelEn: 'School Student', value: 'school' },
     { labelAr: 'طالب اختبارات اللغه الانجليزية', labelEn: 'English Exams student', value: 'exam' },
 ]
+
+export const specialties = [
+    ...schoolSubjects,
+    ...exams,
+]
+
+export const courseStatuses = [
+    { labelAr: 'منشور', labelEn: 'Published', value: 'published' },
+    { labelAr: 'غير منشور', labelEn: 'Unpublished', value: 'unpublished' },
+    { labelAr: 'مجدول', labelEn: 'Scheduled', value: 'scheduled' }
+]
+
+export const courseCategories = {
+    school: [
+        ...schoolSubjects,
+    ],
+    exam: [
+        ...exams,
+    ]
+}

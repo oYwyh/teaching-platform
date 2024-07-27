@@ -9,6 +9,11 @@ export default function DashboardPage() {
                     Students
                 </Button>
             </Link>
+            <Link href="/dashboard/instructors">
+                <Button>
+                    Instructors
+                </Button>
+            </Link>
             <Link href="/dashboard/regions">
                 <Button>
                     Regions
@@ -17,6 +22,11 @@ export default function DashboardPage() {
             <Link href="/dashboard/exams">
                 <Button>
                     Exams
+                </Button>
+            </Link>
+            <Link href="/dashboard/courses">
+                <Button>
+                    Courses
                 </Button>
             </Link>
         </>

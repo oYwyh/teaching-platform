@@ -1,11 +1,12 @@
 import { logout } from "@/actions/auth.actions";
+import { getUser } from "@/actions/index.actions";
 import { Button } from "@/components/ui/button";
 import { validateRequest } from "@/lib/auth";
 import Link from "next/link";
 
 export default async function Home() {
 
-  const { user } = await validateRequest()
+  const user = await getUser()
 
   return (
     <>

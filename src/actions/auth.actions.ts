@@ -3,7 +3,7 @@
 import { uniqueColumnsValidations } from '@/actions/index.actions';
 import { lucia, validateRequest } from '@/lib/auth';
 import db from '@/lib/db';
-import { governorateTable, regionTable, userTable } from '@/lib/db/schema';
+import { governorateTable, regionTable, roleTable, studentTable, userTable } from '@/lib/db/schema';
 import { TCheckSchema, TLoginSchema, TRegisterSchema } from '@/schemas/auth.schema'
 import { columnsRegex, TUser } from '@/types/index.type';
 import { hash, verify } from "@node-rs/argon2";
@@ -88,13 +88,22 @@ export const register = async (data: TRegisterSchema) => {
         lastname,
         email,
         phone,
-        parentPhone: parentPhone || null, // Handle optional field
         region,
         governorate,
-        exam,
-        year,
-        type,
         password: passwordHash,
+    });
+
+    await db.insert(studentTable).values({
+        parentPhone,
+        year,
+        exam,
+        type,
+        userId: userId
+    })
+
+    await db.insert(roleTable).values({
+        userId: userId,
+        role: 'user'
     })
 
     const session = await lucia.createSession(userId, {});
