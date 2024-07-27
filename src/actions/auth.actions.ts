@@ -62,7 +62,7 @@ export const check = async (data: TCheckSchema) => {
 }
 
 export const register = async (data: TRegisterSchema) => {
-    const { firstname, lastname, email, phone, parentPhone, region, governorate, exam, type, year, password } = data
+    const { firstname, lastname, email, phone, parentPhone, region, governorate, englishExam, context, year, password } = data
 
     const unqiueValidation = await uniqueColumnsValidations({ email, phone, parentPhone })
 
@@ -96,8 +96,8 @@ export const register = async (data: TRegisterSchema) => {
     await db.insert(studentTable).values({
         parentPhone,
         year,
-        exam,
-        type,
+        englishExam,
+        context,
         userId: userId
     })
 
@@ -121,18 +121,18 @@ export async function login(data: TLoginSchema) {
     });
 
     if (existingUser) {
-        // const validPassword = await verify(existingUser.password, password, {
-        //     memoryCost: 19456,
-        //     timeCost: 2,
-        //     outputLen: 32,
-        //     parallelism: 1,
-        // });
+        const validPassword = await verify(existingUser.password, password, {
+            memoryCost: 19456,
+            timeCost: 2,
+            outputLen: 32,
+            parallelism: 1,
+        });
 
-        // if (!validPassword) {
-        //     return {
-        //         error: 'Invalid Password'
-        //     }
-        // }
+        if (!validPassword) {
+            return {
+                error: 'Invalid Password'
+            }
+        }
 
         const session = await lucia.createSession(existingUser.id, {});
         const sessionCookie = lucia.createSessionCookie(session.id);

@@ -1,4 +1,4 @@
-import { baseSchema, passwordSchema } from "@/schemas/index.schema";
+import { baseSchema, passwordSchema, studentContexts } from "@/schemas/index.schema";
 import { z } from "zod";
 
 export const updateProfileSchema = z.object({
@@ -11,12 +11,12 @@ export const updateProfileSchema = z.object({
     region: z.string().optional(),
     governorate: z.string().optional(),
     year: z.string().optional().or(z.literal(null)),
-    exam: z.string().optional(),
+    englishExam: z.string().optional(),
     bio: z.string().optional(),
     specialty: z.string().optional(),
-    type: z.enum(['school', 'exam']).or(z.string().optional()),
+    context: z.enum(studentContexts).or(z.literal(null)),
 }).superRefine((data, ctx) => {
-    if (data.type === 'school' && !data.parentPhone) {
+    if (data.context === 'school' && !data.parentPhone) {
         ctx.addIssue({
             code: "custom",
             message: "Parent Phone is required",

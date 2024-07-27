@@ -13,42 +13,15 @@ import { DataTableColumnHeader } from "@/components/ui/table/DataTableColumnHead
 import { baseColumns, BaseColumnsTypes, SelectTableColumn, ExportTableColumn } from "@/constants/columns"
 import Actions from "@/app/dashboard/_components/Actions"
 import { getGovernorateArabicName } from "@/lib/funcs"
-import RegionDialog from "@/app/dashboard/regions/RegionDialog"
-import { studentTypes } from "@/constants/index.constant"
+import RemoveDialog from "@/app/dashboard/_components/RemoveDialog"
+import { studentContexts } from "@/constants/index.constant"
 import { ScrollArea } from "@radix-ui/react-scroll-area"
-import { TCourse } from "@/types/index.type"
+import { TCourse, TInstructor, TRegion, TStudent, TSubject, TUser } from "@/types/index.type"
 
-export type TStudentsColumns = BaseColumnsTypes & {
-    parentPhone: string
-    exam: string
-    year: string
-};
-export type TInstructorColumns = BaseColumnsTypes & {
-    bio: string
-    specialty: string
-};
-export type TRegionsColumns = {
-    id: number
-    region: string
-    governorates: any
-    years: any
-};
-export type TGovernoratesColumns = {
-    id: number
-    governorate: string
-};
-
-export type TExamsColumns = {
-    id: number
-    exam: string
-}
-
-export type TCourseColumns = TCourse
-
-const studentsColumns = baseColumns.concat('parentPhone', 'exam', 'year', 'table')
+const studentsColumns = baseColumns.concat('parentPhone', 'englishExam', 'year', 'table')
 const instructorColumns = baseColumns.concat('bio', 'specialty', 'table')
 const regionsColumns = ['id', 'region', 'governorates', 'years', 'table']
-const examsColumns = ['id', 'exam', 'table']
+const subjectsColumns = ['ids', 'subject', 'regions', 'context', 'table']
 const coursesColumns = [
     'id',
     'title',
@@ -59,7 +32,7 @@ const coursesColumns = [
     'category',
     'enrolledStudents',
     'regionId',
-    'examId',
+    'subjectId',
     'yearId',
     'context',
     'status',
@@ -80,10 +53,10 @@ const StudentsActionsTableColumn = [
             )
         },
         cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = studentsColumns.reduce((acc: { [key: string]: TStudentsColumns }, column: string) => {
+            const rowData = studentsColumns.reduce((acc: { [key: string]: TUser & TStudent }, column: string) => {
                 acc[column] = row.getValue(column);
                 // add type column as well
-                acc['type'] = row.getValue('type')
+                acc['context'] = row.getValue('context')
                 acc['table'] = 'user'
                 return acc;
             }, {});
@@ -104,7 +77,7 @@ const InstructorActionsTableColumn = [
             )
         },
         cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = instructorColumns.reduce((acc: { [key: string]: TInstructorColumns }, column: string) => {
+            const rowData = instructorColumns.reduce((acc: { [key: string]: TInstructor }, column: string) => {
                 acc[column] = row.getValue(column);
                 // add type column as well
                 acc['table'] = 'instructor'
@@ -127,7 +100,7 @@ const RegionsActionTableColumn = [
             )
         },
         cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = regionsColumns.reduce((acc: { [key: string]: TRegionsColumns }, column: string) => {
+            const rowData = regionsColumns.reduce((acc: { [key: string]: TRegion }, column: string) => {
                 acc[column] = row.getValue(column);
                 acc['table'] = 'region'
                 return acc;
@@ -138,7 +111,7 @@ const RegionsActionTableColumn = [
         },
     },
 ]
-const ExamActionTableColumn = [
+const SubjectsActionTableColumn = [
     {
         id: "actions",
         accessorKey: "actions",
@@ -148,9 +121,9 @@ const ExamActionTableColumn = [
             )
         },
         cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = examsColumns.reduce((acc: { [key: string]: TRegionsColumns }, column: string) => {
+            const rowData = subjectsColumns.reduce((acc: { [key: string]: TSubject }, column: string) => {
                 acc[column] = row.getValue(column);
-                acc['table'] = 'exam'
+                acc['table'] = 'subject'
                 return acc;
             }, {});
             return (
@@ -169,7 +142,7 @@ const CoursesActionTableColumn = [
             )
         },
         cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = coursesColumns.reduce((acc: { [key: string]: TCourseColumns }, column: string) => {
+            const rowData = coursesColumns.reduce((acc: { [key: string]: TCourse }, column: string) => {
                 acc[column] = row.getValue(column);
                 acc['table'] = 'course'
                 return acc;
@@ -181,7 +154,7 @@ const CoursesActionTableColumn = [
     },
 ]
 
-export const StudentsTableColumns: ColumnDef<TStudentsColumns>[] = [
+export const StudentsTableColumns: ColumnDef<TUser & TStudent>[] = [
     ...SelectTableColumn,
     ...studentsColumns.map((column: string) => ({
         accessorKey: column,
@@ -199,28 +172,28 @@ export const StudentsTableColumns: ColumnDef<TStudentsColumns>[] = [
                     {cell.column.id == 'governorate' && (
                         <p>{formattedValue}</p>
                     )}
-                    {cell.column.id == 'parentPhone' && row.getValue('type') == 'school' && (
+                    {cell.column.id == 'parentPhone' && row.getValue('context') == 'school' && (
                         <p>{value}</p>
                     )}
-                    {cell.column.id == 'parentPhone' && row.getValue('type') == 'exam' && (
+                    {cell.column.id == 'parentPhone' && row.getValue('context') == 'englishExam' && (
                         <p>None</p>
                     )}
-                    {cell.column.id == 'year' && row.getValue('type') == 'school' && (
+                    {cell.column.id == 'year' && row.getValue('context') == 'school' && (
                         <p>{formattedValue}</p>
                     )}
-                    {cell.column.id == 'year' && row.getValue('type') == 'exam' && (
+                    {cell.column.id == 'year' && row.getValue('context') == 'englishExam' && (
                         <p>None</p>
                     )}
-                    {cell.column.id == 'exam' && row.getValue('type') == 'school' && (
+                    {cell.column.id == 'englishExam' && row.getValue('context') == 'school' && (
                         <p>None</p>
                     )}
-                    {cell.column.id == 'exam' && row.getValue('type') == 'exam' && (
+                    {cell.column.id == 'englishExam' && row.getValue('context') == 'englishExam' && (
                         <p>{formattedValue}</p>
                     )}
                     {cell.column.id == 'table' && (
                         <>user</>
                     )}
-                    {cell.column.id != 'governorate' && cell.column.id != 'year' && cell.column.id != 'parentPhone' && cell.column.id != 'exam' && cell.column.id != 'table' && (
+                    {cell.column.id != 'governorate' && cell.column.id != 'year' && cell.column.id != 'parentPhone' && cell.column.id != 'englishExam' && cell.column.id != 'table' && (
                         <p>{value}</p>
                     )}
                 </>
@@ -228,22 +201,22 @@ export const StudentsTableColumns: ColumnDef<TStudentsColumns>[] = [
         }
     })),
     {
-        accessorKey: "type",
+        accessorKey: "context",
         header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Type" />
+            <DataTableColumnHeader column={column} title="Context" />
         ),
         cell: ({ row }) => {
-            const type = studentTypes.find(
-                (type) => type.value === row.getValue("type")
+            const context = studentContexts.find(
+                (context) => context.value === row.getValue("context")
             )
 
-            if (!type) {
+            if (!context) {
                 return null
             }
 
             return (
                 <div className="flex w-[100px] items-center">
-                    <span>{type.labelEn}</span>
+                    <span>{context.labelEn}</span>
                 </div>
             )
         },
@@ -255,7 +228,7 @@ export const StudentsTableColumns: ColumnDef<TStudentsColumns>[] = [
     ...ExportTableColumn
 ];
 
-export const InstructorTableColumns: ColumnDef<TInstructorColumns>[] = [
+export const InstructorTableColumns: ColumnDef<TInstructor>[] = [
     ...SelectTableColumn,
     ...instructorColumns.map((column: string) => ({
         accessorKey: column,
@@ -295,7 +268,7 @@ export const InstructorTableColumns: ColumnDef<TInstructorColumns>[] = [
 ];
 
 
-export const RegionsTableColumns: ColumnDef<TRegionsColumns>[] = [
+export const RegionsTableColumns: ColumnDef<TRegion>[] = [
     ...SelectTableColumn,
     ...regionsColumns.map((column: string) => ({
         accessorKey: column,
@@ -310,10 +283,9 @@ export const RegionsTableColumns: ColumnDef<TRegionsColumns>[] = [
                     {
                         cell.column.id == 'governorates' && (
                             <>
-                                <RegionDialog
-                                    array={row.getValue('governorates') as string[]}
-                                    region={row.getValue('region') as string}
-                                    regionId={row.getValue('id') as number}
+                                <RemoveDialog
+                                    array={row.getValue('governorates')}
+                                    region={{ id: row.getValue('id'), region: row.getValue('region') }}
                                     name='governorate'
                                 />
                             </>
@@ -322,10 +294,9 @@ export const RegionsTableColumns: ColumnDef<TRegionsColumns>[] = [
                     {
                         cell.column.id == 'years' && (
                             <>
-                                <RegionDialog
-                                    array={row.getValue('years') as string[]}
-                                    region={row.getValue('region') as string}
-                                    regionId={row.getValue('id') as number}
+                                <RemoveDialog
+                                    array={row.getValue('years')}
+                                    region={{ id: row.getValue('id'), region: row.getValue('region') }}
                                     name='year'
                                 />
                             </>
@@ -349,9 +320,9 @@ export const RegionsTableColumns: ColumnDef<TRegionsColumns>[] = [
     ...ExportTableColumn
 ]
 
-export const ExamxTableColumns: ColumnDef<TExamsColumns>[] = [
+export const SubjectsTableColumns: ColumnDef<TSubject>[] = [
     ...SelectTableColumn,
-    ...examsColumns.map((column: string) => ({
+    ...subjectsColumns.map((column: string) => ({
         accessorKey: column,
         header: ({ column }: { column: any }) => {
             return (
@@ -361,20 +332,33 @@ export const ExamxTableColumns: ColumnDef<TExamsColumns>[] = [
         cell: ({ cell, row }: { cell: Cell<any, any>, row: Row<any> }) => {
             return (
                 <>
-                    {cell.column.id == 'table' ? (
-                        <>exam</>
-                    ) : (
+                    {cell.column.id == 'table' && (
+                        <>subject</>
+                    )}
+                    {cell.column.id == 'ids' && (
+                        <>{JSON.stringify(cell.getValue())}</>
+                    )}
+                    {cell.column.id == 'regions' && (
+                        <>
+                            {row.getValue('context') == 'school' ? (
+                                <RemoveDialog regions={cell.getValue()} name="subject" />
+                            ) : (
+                                <div className="p-2">None</div>
+                            )}
+                        </>
+                    )}
+                    {cell.column.id != 'table' && cell.column.id != 'regions' && cell.column.id != 'ids' && (
                         <p>{cell.getValue()}</p>
                     )}
                 </>
             )
         }
     })),
-    ...ExamActionTableColumn,
+    ...SubjectsActionTableColumn,
     ...ExportTableColumn
 ]
 
-export const CoursesTableColumns: ColumnDef<TCourseColumns>[] = [
+export const CoursesTableColumns: ColumnDef<TCourse>[] = [
     ...SelectTableColumn,
     ...coursesColumns.map((column: string) => ({
         accessorKey: column,
@@ -386,35 +370,12 @@ export const CoursesTableColumns: ColumnDef<TCourseColumns>[] = [
         cell: ({ cell, row }: { cell: Cell<any, any>, row: Row<any> }) => {
             return (
                 <>
-                    {
-                        cell.column.id == 'governorates' && (
-                            <>
-                                <RegionDialog
-                                    array={row.getValue('governorates') as string[]}
-                                    region={row.getValue('region') as string}
-                                    regionId={row.getValue('id') as number}
-                                    name='governorate'
-                                />
-                            </>
-                        )
-                    }
-                    {
-                        cell.column.id == 'years' && (
-                            <>
-                                <RegionDialog
-                                    array={row.getValue('years') as string[]}
-                                    region={row.getValue('region') as string}
-                                    regionId={row.getValue('id') as number}
-                                    name='year'
-                                />
-                            </>
-                        )
-                    }
+
                     {cell.column.id == 'table' && (
                         <>region</>
                     )}
                     {
-                        cell.column.id != 'years' && cell.column.id != 'governorates' && cell.column.id != 'table' && (
+                        cell.column.id != 'table' && (
                             <>
                                 <p>{cell.getValue()}</p>
                             </>

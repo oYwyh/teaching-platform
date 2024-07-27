@@ -1,6 +1,6 @@
 'use client'
 
-import { getExams, getGovernorates, getRegions, getYears } from "@/actions/index.actions";
+import { getSubjects, getGovernorates, getRegions, getYears } from "@/actions/index.actions";
 import { login, register } from "@/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -21,24 +21,24 @@ import { useEffect, useState } from "react";
 
 export default function Register({ insertedCredential }: { insertedCredential: TInsertedCredential | null }) {
 
-    const [studentType, setStudentType] = useState<string | undefined>();
+    const [studentContext, setStudentContext] = useState<string | undefined>();
     const [selectedRegion, setSelectedRegion] = useState<string | undefined>();
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>({});
-    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>({});
-    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>({});
-    const [exams, setExams] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
+    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>();
+    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
+    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
+    const [englishExams, setEnglishExams] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
 
     useEffect(() => {
         const fetchRegions = async () => {
             const regions = await getRegions();
             const governorates = await getGovernorates();
             const years = await getYears();
-            const exams = await getExams();
+            const englishExams = await getSubjects('englishExam');
 
             setRegions(regions);
             setGovernorates(governorates);
             setYears(years);
-            setExams(exams);
+            setEnglishExams(englishExams);
         }
 
         fetchRegions();
@@ -56,9 +56,8 @@ export default function Register({ insertedCredential }: { insertedCredential: T
     })
 
     const onSubmit = async (data: { [key: string]: string | number } & TRegisterSchema) => {
-
         Object.entries(data).forEach(([key, value]) => {
-            if (typeof value === 'string') {
+            if (typeof value === 'string' && key != 'context') {
                 data[key] = value.toLowerCase();
             }
         });
@@ -77,9 +76,9 @@ export default function Register({ insertedCredential }: { insertedCredential: T
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <div>
-                        <FormField form={form} name='type' select={'studentType'} setState={setStudentType} />
+                        <FormField form={form} name='context' select={'studentContext'} setState={setStudentContext} />
                     </div>
-                    {studentType && (
+                    {studentContext && (
                         <>
                             <div className="flex flex-row gap-3">
                                 <FormField form={form} name='firstname' />
@@ -96,7 +95,7 @@ export default function Register({ insertedCredential }: { insertedCredential: T
                                 ) : (
                                     <FormField form={form} name="phone" />
                                 )}
-                                {studentType == 'school' && (
+                                {studentContext == 'school' && (
                                     <FormField form={form} name='parentPhone' />
                                 )}
                             </div>
@@ -111,11 +110,11 @@ export default function Register({ insertedCredential }: { insertedCredential: T
                             <div className="flex flex-row gap-3 item-center">
                                 {selectedRegion && (
                                     <>
-                                        {studentType == 'school' && (
-                                            <FormField form={form} name='year' select='year' region={selectedRegion} years={years} />
+                                        {studentContext == 'school' && (
+                                            <FormField form={form} name='year' select='year' years={years} region={selectedRegion} />
                                         )}
-                                        {studentType == 'exam' && (
-                                            <FormField form={form} name='exam' select='exam' exams={exams} />
+                                        {studentContext == 'englishExam' && (
+                                            <FormField form={form} name='englishExam' select='englishExam' englishExams={englishExams} />
                                         )}
                                     </>
                                 )}

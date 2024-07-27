@@ -1,9 +1,9 @@
-export type TTables = "user" | "instructor" | "region" | "governorate" | "year" | "exam" | 'course'
+export type TTables = "user" | "instructor" | "region" | "governorate" | "year" | 'course' | 'subject'
 export type UserRoles = "admin" | "user" | "instructor"
-export type UserTypes = "school" | "exam"
-export type CourseContexts = 'school' | 'exam'
+export type StudentContexts = "school" | "englishExam"
+export type CourseContexts = 'school' | 'englishExam'
 export type CourseStatus = 'published' | 'unpublished' | 'scheduled'
-
+export type SubjectContexts = 'school' | 'englishExam'
 export type TUser = {
     id: string;
     firstname: string;
@@ -17,10 +17,10 @@ export type TUser = {
 }
 
 export type TStudent = {
-    parentPhone: string;
-    year: string;
-    exam: string;
-    type: UserTypes;
+    parentPhone: string | null;
+    year: string | null;
+    englishExam: string | null;
+    context: StudentContexts;
 }
 
 export type TInstructor = {
@@ -38,10 +38,10 @@ export type TFullUserData = {
     governorate: string;
     picture: string;
     role: UserRoles;
-    exam?: string;
+    englishExam?: string;
     year?: string;
     parentPhone?: string;
-    type?: UserTypes;
+    context?: StudentContexts;
     bio?: string;
     qualifications?: string;
     experience?: number;
@@ -67,9 +67,10 @@ export type TYear = {
     regionId: number;
 }
 
-export type TExam = {
+export type TSubject = {
     id: number;
-    exam: string
+    subject: string
+    context: SubjectContexts
 }
 
 export type TCourse = {

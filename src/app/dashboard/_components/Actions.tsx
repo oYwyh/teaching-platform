@@ -10,6 +10,7 @@ import Link from "next/link";
 import EditRegion from "@/app/dashboard/regions/Edit";
 import EditStudent from "@/app/dashboard/students/Edit";
 import EditInstructor from "@/app/dashboard/instructors/Edit";
+import EditSubject from "@/app/dashboard/subjects/Edit";
 
 export default function Actions({ row, rowData }: { row: Row<any>, rowData: any }) {
     const [open, setOpen] = useState<boolean>();
@@ -67,11 +68,18 @@ export default function Actions({ row, rowData }: { row: Row<any>, rowData: any 
                             />
                         </>
                     )}
-                    {rowData.table == 'exam' && (
+                    {rowData.table == 'subject' && (
                         <>
+                            {row.getValue('context') == 'school' && (
+                                <EditSubject
+                                    ids={row.getValue('ids')}
+                                    rowData={rowData}
+                                    setPopOpen={setOpen}
+                                />
+                            )}
                             <Delete
-                                id={row.getValue('id')}
-                                table="exam"
+                                id={row.getValue('ids')}
+                                table="subject"
                                 setPopOpen={setOpen}
                             />
                         </>

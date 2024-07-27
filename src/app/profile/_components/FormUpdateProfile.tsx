@@ -31,8 +31,8 @@ export default function FormUpdateProfile({
     region: user.region,
     governorate: user.governorate,
     year: user.year,
-    exam: user.exam,
-    type: user.type as "school", // Add type assertion here
+    englishExam: user.englishExam,
+    context: user.context as "school", // Add type assertion here
     bio: user.bio,
     specialty: user.specialty
   })
@@ -49,8 +49,8 @@ export default function FormUpdateProfile({
       region: user.region,
       governorate: user.governorate,
       year: user.year,
-      exam: user.exam,
-      type: user.type,
+      englishExam: user.englishExam,
+      context: user.context,
       bio: user.bio,
       specialty: user.specialty
     },
@@ -114,8 +114,8 @@ export default function FormUpdateProfile({
         region: data.region ? data.region : userData.region,
         governorate: data.governorate ? data.governorate : userData.governorate,
         year: data.year ? data.year : userData.year,
-        exam: data.exam ? data.exam : userData.exam,
-        type: data.type ? data.type : userData.type,
+        englishExam: data.englishExam ? data.englishExam : userData.englishExam,
+        context: data.context ? data.context : userData.context,
         bio: data.bio ? data.bio : userData.bio,
         specialty: data.specialty ? data.specialty : userData.specialty
       })
@@ -140,7 +140,7 @@ export default function FormUpdateProfile({
         </div>
         <div className="flex flex-row gap-3">
           <FormField form={form} name="phone" />
-          {user.type == 'school' && (
+          {user.context == 'school' && (
             <FormField form={form} name="parentPhone" />
           )}
         </div>
@@ -149,11 +149,11 @@ export default function FormUpdateProfile({
           <FormField form={form} name="governorate" disabled />
         </div>
         <div className="flex flex-row gap-3 pb-2">
-          {user.type == 'school' && (
+          {user.context == 'school' && (
             <FormField form={form} name="year" disabled />
           )}
-          {user.type == 'exam' && (
-            <FormField form={form} name="exam" disabled />
+          {user.context == 'englishExam' && (
+            <FormField form={form} name="englishExam" disabled />
           )}
         </div>
         <div className="flex flex-row gap-3 pb-2">
@@ -166,7 +166,7 @@ export default function FormUpdateProfile({
             <FormField form={form} name="specialty" disabled />
           )}
         </div>
-        <FormField form={form} name="type" disabled type='hidden' />
+        <FormField form={form} name="context" disabled type='hidden' />
         <Button className="w-[100%]" type="submit">Update</Button>
         <FormMessage>{error}</FormMessage>
       </form>

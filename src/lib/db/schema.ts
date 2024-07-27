@@ -17,7 +17,6 @@ export const timestamps = (): {
 
 
 export const UserRoles = pgEnum("userRoles", ["admin", "user", "instructor"]);
-export const UserTypes = pgEnum("userTypes", ["school", "exam"]);
 
 export const userTable = pgTable("user", {
     id: text("id").primaryKey().notNull(),
@@ -41,15 +40,18 @@ export const roleTable = pgTable("role", {
     ...timestamps(),
 });
 
+
+export const StudentContexts = pgEnum("studentContexts", ["school", "englishExam"]);
+
 export const studentTable = pgTable("student", {
     id: serial("id").primaryKey(),
     userId: text("userId")
         .notNull()
         .references(() => userTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     year: text("year"),
-    exam: text("exam"),
+    englishExam: text("englishExam"),
     parentPhone: text("parentPhone").unique(),
-    type: UserTypes("type").notNull(),
+    context: StudentContexts("context").notNull(),
     ...timestamps(),
 });
 
@@ -82,15 +84,19 @@ export const yearTable = pgTable('year', {
     regionId: integer('regionId').references(() => regionTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull()
 })
 
-export const examTable = pgTable("exam", {
+export const SubjectContexts = pgEnum('subjectContexts', ['school', 'englishExam'])
+
+export const subjectTable = pgTable("subject", {
     id: serial("id").primaryKey(),
-    exam: text("exam").notNull(),
+    subject: text("subject").notNull(),
+    context: SubjectContexts("context").notNull(),
+    regionId: integer('regionId').references(() => regionTable.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     ...timestamps(),
 });
 
 
 
-export const CourseContexts = pgEnum("courseContexts", ["school", "exam"]);
+export const CourseContexts = pgEnum("courseContexts", ["school", "englishExam"]);
 export const CourseStatus = pgEnum("courseStatus", ["published", "unpublished", 'scheduled']);
 
 export const courseTable = pgTable("course", {
@@ -100,11 +106,11 @@ export const courseTable = pgTable("course", {
     instructorId: integer("instructorId").references(() => instructorTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
     price: decimal('price', { precision: 10, scale: 2 }).notNull(),
     currency: text("currency").notNull(),
-    category: text("category").notNull(),
     enrolledStudents: integer('enrolledStudents').default(0).notNull(),
+    thumbnail: text("thumbnail").notNull(),
     regionId: integer("regionId").references(() => regionTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     yearId: integer("yearId").references(() => yearTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
-    examId: integer("examId").references(() => examTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    subjectId: integer("examId").references(() => subjectTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     context: CourseContexts("context").notNull(),
     status: CourseStatus('status').default('published').notNull(),
     releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
@@ -159,7 +165,8 @@ export const instructorRelations = relations(instructorTable, ({ one, many }) =>
 
 export const regionRalations = relations(regionTable, ({ one, many }) => ({
     governorates: many(governorateTable),
-    years: many(yearTable)
+    years: many(yearTable),
+    subjects: many(subjectTable),
 }))
 
 export const governorateRelations = relations(governorateTable, ({ one, many }) => ({
@@ -173,7 +180,14 @@ export const yearRelations = relations(yearTable, ({ one, many }) => ({
     region: one(regionTable, {
         fields: [yearTable.regionId],
         references: [regionTable.id]
-    })
+    }),
+}))
+
+export const subjectRelations = relations(subjectTable, ({ one, many }) => ({
+    region: one(regionTable, {
+        fields: [subjectTable.regionId],
+        references: [regionTable.id]
+    }),
 }))
 
 export const courseRelations = relations(courseTable, ({ one }) => ({
@@ -185,12 +199,8 @@ export const courseRelations = relations(courseTable, ({ one }) => ({
         fields: [courseTable.regionId],
         references: [regionTable.id]
     }),
-    year: one(yearTable, {
-        fields: [courseTable.yearId],
-        references: [yearTable.id]
-    }),
-    exam: one(examTable, {
-        fields: [courseTable.examId],
-        references: [examTable.id]
+    subject: one(subjectTable, {
+        fields: [courseTable.subjectId],
+        references: [subjectTable.id]
     })
 }))

@@ -1,3 +1,4 @@
+import { studentContexts } from "@/schemas/index.schema";
 import { z } from "zod";
 
 
@@ -16,8 +17,8 @@ export const registerSchema = z.object({
     year: z.string().optional(),
     region: z.string(),
     governorate: z.string(),
-    exam: z.string().optional(),
-    type: z.enum(['school', 'exam']),
+    englishExam: z.string().optional(),
+    context: z.enum(studentContexts),
     password: z.string(),
     confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
@@ -27,25 +28,25 @@ export const registerSchema = z.object({
     message: "Personal phone and parent phone cannot be the same",
     path: ['phone']
 }).superRefine((data, ctx) => {
-    if (data.type === 'school' && !data.year) {
+    if (data.context == 'school' && !data.year) {
         ctx.addIssue({
             code: "custom",
             message: "Year is required",
             path: ["year"],
         });
     }
-    if (data.type === 'school' && !data.parentPhone) {
+    if (data.context == 'school' && !data.parentPhone) {
         ctx.addIssue({
             code: "custom",
             message: "Parent Phone is required",
             path: ["parentPhone"],
         });
     }
-    if (data.type === 'exam' && !data.exam) {
+    if (data.context == 'englishExam' && !data.englishExam) {
         ctx.addIssue({
             code: "custom",
-            message: "Exam is required",
-            path: ["exam"],
+            message: "englishExam is required",
+            path: ["englishExam"],
         });
     }
 })

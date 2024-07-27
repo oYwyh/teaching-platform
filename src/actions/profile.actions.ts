@@ -14,7 +14,7 @@ import { redirect } from "next/navigation";
 import { TInstructor, TStudent, TUser } from "@/types/index.type";
 
 export const updateProfile = async (data: TUpdateProfileSchema) => {
-    const { id, firstname, lastname, email, phone, parentPhone, year, region, type, bio, specialty, exam, governorate } = data;
+    const { id, firstname, lastname, email, phone, parentPhone, year, region, context, bio, specialty, englishExam, governorate } = data;
     const { user } = await validateRequest();
     if (!user) redirect('/auth')
     const userId = id ? id : user.id
@@ -49,8 +49,8 @@ export const updateProfile = async (data: TUpdateProfileSchema) => {
     const studentUpdateData: Partial<TStudent> = {};
     if (parentPhone !== undefined && parentPhone !== null) studentUpdateData.parentPhone = parentPhone;
     if (year !== undefined && year !== null) studentUpdateData.year = year;
-    if (exam !== undefined && exam !== null) studentUpdateData.exam = exam;
-    if (type !== undefined && type !== null) studentUpdateData.type = type;
+    if (englishExam !== undefined && englishExam !== null) studentUpdateData.englishExam = englishExam;
+    if (context !== undefined && context !== null) studentUpdateData.context = context;
 
     if (Object.keys(studentUpdateData).length > 0) {
         await db.update(studentTable).set(studentUpdateData).where(sql`${studentTable.userId} = ${userId}`).returning();

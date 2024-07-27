@@ -14,18 +14,17 @@ async function getData() {
         .leftJoin(governorateTable, eq(regionTable.id, governorateTable.regionId))
         .leftJoin(yearTable, eq(regionTable.id, yearTable.regionId));
 
-
     // Structure the data into regions and their related governorates and school years
     const structuredData = data.reduce((acc: {
         [key: number]: {
             region: TRegion;
-            governorates: Set<string>;
-            years: Set<string>;
+            governorates: Map<number, { id: number, governorate: string }>;
+            years: Map<number, { id: number, year: string }>;
         }
     }, row) => {
         const region = row.region;
         const governorate = row.governorate;
-        const year = row.year; // Change here to match the log data
+        const year = row.year;
 
         if (!region) return acc; // Skip if region is undefined
 
@@ -34,17 +33,17 @@ async function getData() {
         if (!acc[regionId]) {
             acc[regionId] = {
                 region,
-                governorates: new Set(),
-                years: new Set()
+                governorates: new Map(),
+                years: new Map()
             };
         }
 
         if (governorate) {
-            acc[regionId].governorates.add(governorate.governorate);
+            acc[regionId].governorates.set(governorate.id, { id: governorate.id, governorate: governorate.governorate });
         }
 
         if (year) {
-            acc[regionId].years.add(year.year);
+            acc[regionId].years.set(year.id, { id: year.id, year: year.year });
         }
 
         return acc;
@@ -53,12 +52,16 @@ async function getData() {
     // Convert structured data to array format with governorates and years included in each region object
     const regionsWithGovernoratesAndYears = Object.values(structuredData).map(item => ({
         ...item.region,
-        governorates: Array.from(item.governorates), // Convert Set to Array
-        years: Array.from(item.years) // Convert Set to Array
+        governorates: Array.from(item.governorates.values()), // Convert Map values to Array
+        years: Array.from(item.years.values()) // Convert Map values to Array
     }));
+
+    console.log(regionsWithGovernoratesAndYears);
 
     return regionsWithGovernoratesAndYears;
 }
+
+
 
 const getExistingRegions = async () => {
     const regions = await db
@@ -75,9 +78,7 @@ export default async function RegionsPage() {
 
     const data = await getData();
 
-    console.log(data)
     const existingRegions = await getExistingRegions()
-
 
     return (
         <div>

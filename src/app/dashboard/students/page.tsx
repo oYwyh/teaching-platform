@@ -16,9 +16,9 @@ async function getData() {
     const users = joinedData.map(item => ({
         ...item.user,
         year: item.student?.year,
-        exam: item.student?.exam,
+        englishExam: item.student?.englishExam,
         parentPhone: item.student?.parentPhone,
-        type: item.student?.type
+        context: item.student?.context
     }));
 
     return users;

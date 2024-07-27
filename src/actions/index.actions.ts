@@ -4,7 +4,6 @@ import db from "@/lib/db";
 import { columnsRegex, TFullUserData } from "@/types/index.type";
 import { eq, sql } from "drizzle-orm";
 import {
-    examTable,
     governorateTable,
     regionTable,
     userTable,
@@ -12,12 +11,14 @@ import {
     roleTable,
     studentTable,
     instructorTable,
-    courseTable
+    courseTable,
+    subjectTable
 
 } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { validateRequest } from "@/lib/auth";
+
 export const uniqueColumnsValidations = async (data: any, userId?: string) => {
     const userColumns = [
         data.email && { column: 'email', value: data.email, regex: columnsRegex.email },
@@ -52,6 +53,27 @@ export const uniqueColumnsValidations = async (data: any, userId?: string) => {
         if (!regex.test(value)) {
             errors[column] = `${column.charAt(0).toUpperCase() + column.slice(1)} is invalid`;
         }
+
+        // Additional check for phone in parentPhone in studentTable
+        if (column === 'phone') {
+            const otherExist = await db.query.studentTable.findFirst({
+                columns: { parentPhone: true },
+                where: (studentTable: { [key: string]: any }, { eq, and, not }) => {
+                    if (userId) {
+                        return and(
+                            eq(studentTable.parentPhone, value),
+                            not(eq(studentTable.userId, userId))
+                        );
+                    } else {
+                        return eq(studentTable.parentPhone, value);
+                    }
+                },
+            });
+
+            if (otherExist) {
+                errors[column] = `${column.charAt(0).toUpperCase() + column.slice(1)} already exists as parentPhone`;
+            }
+        }
     }
 
     // Check unique constraints for studentTable
@@ -77,7 +99,7 @@ export const uniqueColumnsValidations = async (data: any, userId?: string) => {
             errors[column] = `${column.charAt(0).toUpperCase() + column.slice(1)} is invalid`;
         }
 
-        // Additional check for phone in parentPhone and vice versa
+        // Additional check for parentPhone in phone in userTable
         if (column === 'parentPhone') {
             const otherExist = await db.query.userTable.findFirst({
                 columns: { phone: true },
@@ -107,44 +129,39 @@ export const uniqueColumnsValidations = async (data: any, userId?: string) => {
 };
 
 
-
-
-
 const tablesMap = {
     user: userTable,
     region: regionTable,
     governorate: governorateTable,
     year: yearTable,
-    exam: examTable,
     instructor: instructorTable,
     course: courseTable,
+    subject: subjectTable,
 };
 
 
-export async function deleteAction(id: string | number, table: keyof typeof tablesMap) {
+export async function deleteAction(id: string | number | number[] | string[], table: keyof typeof tablesMap) {
+
+    let ids;
+    if (typeof id == 'object') ids = id.map((item: any) => item.subjectId);
     const tableDefinition = tablesMap[table];
 
     if (!tableDefinition) {
         throw new Error("Invalid table name");
     }
 
-    if (table == 'governorate') {
-        const governorate = await db.select().from(governorateTable).where(sql`${governorateTable.governorate} = ${id}`);
-        id = governorate[0].id;
+    let user;
+    if (ids && ids?.length > 0) {
+        user = true
+        ids?.map(async (id) => {
+            await db.delete(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
+        })
+    } else {
+        user = await db.delete(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
     }
-
-    if (table == 'year') {
-        const year = await db.select().from(yearTable).where(sql`${yearTable.year} = ${id}`);
-        id = year[0].id;
-    }
-
-    const user = await db.delete(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
 
     if (user) {
         revalidatePath('/dashboard')
-        return {
-            done: true
-        }
     } else {
         throw new Error("Deletion failed");
     }
@@ -156,6 +173,7 @@ export const getRegions = async () => {
 
     const formattedRegions = regions.map(region => {
         return {
+            id: region.id,
             labelAr: region.region.replace('_', ' ').charAt(0).toUpperCase() + region.region.replace('_', ' ').slice(1).toLowerCase(),
             labelEn: region.region.replace('_', ' ').charAt(0).toUpperCase() + region.region.replace('_', ' ').slice(1).toLowerCase(),
             value: region.region
@@ -240,25 +258,61 @@ export const getYears = async () => {
 
 };
 
-export const getExams = async () => {
-    const exams = await db.select().from(examTable);
+export const getSubjects = async (context: 'school' | 'englishExam') => {
+    const subjects = await db.select().from(subjectTable).where(eq(subjectTable.context, context));
+    // Fetch region names from the database
+    const regions = await db.select().from(regionTable);
+    const regionMap = regions.reduce((map, region) => {
+        map[region.id] = region.region;
+        return map;
+    }, {} as Record<number, string>);
 
-    // Initialize formattedGovernorates with an index signature
-    const formattedExams: { labelAr: string; labelEn: string; value: string; }[] = [];
+    if (context === 'englishExam') {
+        // Format as a flat array
+        const formattedSubjects: { labelAr: string; labelEn: string; value: string; }[] = subjects.map((subject) => ({
+            labelAr: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '), // Modify this for the Arabic label
+            labelEn: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '),
+            value: subject.subject.toLowerCase().replace(' ', '_'),
+        }));
 
-    exams.forEach((exam) => {
-        formattedExams.push({
-            labelAr: exam.exam.charAt(0).toUpperCase() + exam.exam.slice(1).replace('_', ' '), // Modify this for the Arabic label
-            labelEn: exam.exam.charAt(0).toUpperCase() + exam.exam.slice(1).replace('_', ' '),
-            value: exam.exam.toLowerCase().replace(' ', '_'),
+        return formattedSubjects;
+    } else if (context === 'school') {
+        // Initialize formattedSubjects with a dynamic object
+        const formattedSubjects: Record<string, { labelAr: string; labelEn: string; value: string; }[]> = {};
+
+        subjects.forEach((subject) => {
+            const regionName = regionMap[subject.regionId];
+            if (!regionName) return; // Skip if regionId is not mapped
+
+            if (!formattedSubjects[regionName]) {
+                formattedSubjects[regionName] = [];
+            }
+
+            formattedSubjects[regionName].push({
+                labelAr: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '), // Modify this for the Arabic label
+                labelEn: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '),
+                value: subject.subject.toLowerCase().replace(' ', '_'),
+            });
         });
-    });
 
-
-    console.log(formattedExams)
-
-    return formattedExams;
+        return formattedSubjects;
+    }
 };
+
+export const getInstructors = async () => {
+    const data = await db.select()
+        .from(userTable)
+        .leftJoin(roleTable, eq(roleTable.userId, userTable.id))
+        .leftJoin(instructorTable, eq(instructorTable.userId, userTable.id))
+        .where(eq(roleTable.role, 'instructor'));
+
+    const instructors = data.map((item: any) => ({
+        id: item.instructor.id,
+        instructor: item.user.firstname + ' ' + item.user.lastname
+    }));
+
+    return instructors;
+}
 
 // src/lib/serverActions/getUserData.ts
 
@@ -278,10 +332,10 @@ export const getUser = async (): Promise<TFullUserData | null> => {
         return {
             ...user,
             role: userRole,
-            exam: student?.exam ?? undefined,
+            englishExam: student?.englishExam ?? undefined,
             year: student?.year ?? undefined,
             parentPhone: student?.parentPhone ?? undefined,
-            type: student?.type,
+            context: student?.context,
         };
     } else if (userRole === 'instructor') {
         // Fetch instructor-specific data
@@ -290,11 +344,7 @@ export const getUser = async (): Promise<TFullUserData | null> => {
             ...user,
             role: userRole,
             bio: instructor?.bio,
-            qualifications: instructor?.qualifications,
-            experience: instructor?.experience,
             specialty: instructor?.specialty,
-            contactInfo: instructor?.contactInfo ?? undefined,
-            officeLocation: instructor?.officeLocation ?? undefined,
         };
     } else {
         // Just return user data for other roles (e.g., admin, user)

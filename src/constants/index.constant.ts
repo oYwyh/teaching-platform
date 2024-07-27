@@ -601,52 +601,47 @@ export const years: IYears = {
     ]
 };
 
-export const exams = [
-    { labelAr: 'IELTS', labelEn: 'IELTS', value: 'ielts' },
-    { labelAr: 'TOEFL', labelEn: 'TOEFL', value: 'toefl' },
-    { labelAr: 'TOEIC', labelEn: 'TOEIC', value: 'toeic' },
-    { labelAr: 'PTE', labelEn: 'PTE', value: 'pte' },
-    { labelAr: 'Cambridge English', labelEn: 'Cambridge English', value: 'cambridge_english' },
-    { labelAr: 'Duolingo English Test', labelEn: 'Duolingo English Test', value: 'duolingo' },
-    { labelAr: 'OET', labelEn: 'OET', value: 'oet' },
-    { labelAr: 'Michigan English Test', labelEn: 'Michigan English Test', value: 'met' },
-    { labelAr: 'IELCA', labelEn: 'IELCA', value: 'ielca' },
-    { labelAr: 'BULATS', labelEn: 'BULATS', value: 'bulats' },
-    { labelAr: 'FCE', labelEn: 'FCE', value: 'fce' },
-    { labelAr: 'CAE', labelEn: 'CAE', value: 'cae' },
-    { labelAr: 'CPE', labelEn: 'CPE', value: 'cpe' },
-    { labelAr: 'TIE', labelEn: 'TIE', value: 'tie' },
-    { labelAr: 'ECPE', labelEn: 'ECPE', value: 'ecpe' },
-    { labelAr: 'MELAB', labelEn: 'MELAB', value: 'melab' },
-    { labelAr: 'STEP Eiken', labelEn: 'STEP Eiken', value: 'step_eiken' },
-    { labelAr: 'Password English Language Test', labelEn: 'Password English Language Test', value: 'password' },
-    { labelAr: 'Trinity ISE', labelEn: 'Trinity ISE', value: 'trinity_ise' },
-    { labelAr: 'Trinity GESE', labelEn: 'Trinity GESE', value: 'trinity_gese' }
-];
+export const subjects = {
+    englishExam: [
+        { labelAr: 'IELTS', labelEn: 'IELTS', value: 'ielts' },
+        { labelAr: 'TOEFL', labelEn: 'TOEFL', value: 'toefl' },
+        { labelAr: 'TOEIC', labelEn: 'TOEIC', value: 'toeic' },
+        { labelAr: 'PTE', labelEn: 'PTE', value: 'pte' },
+    ],
+    school: [
+        { labelAr: 'عربي', labelEn: 'Arabic', value: 'arabic' },
+        { labelAr: 'انجليزي', labelEn: 'English', value: 'english' },
+        { labelAr: 'رياضيات', labelEn: 'Math', value: 'math' },
+        { labelAr: 'علوم', labelEn: 'Sience', value: 'sience' },
+        { labelAr: 'أحياء', labelEn: 'Bology', value: 'bology' },
+        { labelAr: 'الكيمياء', labelEn: 'Chemistry', value: 'chemistry' },
+        { labelAr: 'الفيزياء', labelEn: 'Physics', value: 'physics' },
+        { labelAr: 'الجغرافيا', labelEn: 'Geography', value: 'geography' },
+        { labelAr: 'التاريخ', labelEn: 'History', value: 'history' },
+        { labelAr: 'الجيولوجيا', labelEn: 'Geology', value: 'geology' },
+        { labelAr: 'الدين', labelEn: 'Religion', value: 'religion' },
+    ]
+};
 
-export const schoolSubjects = [
-    // arabic, english, math, sience, bology, chemistry, physics, geography, history, geology, religion
-    { labelAr: 'عربي', labelEn: 'Arabic', value: 'arabic' },
-    { labelAr: 'انجليزي', labelEn: 'English', value: 'english' },
-    { labelAr: 'رياضيات', labelEn: 'Math', value: 'math' },
-    { labelAr: 'علوم', labelEn: 'Sience', value: 'sience' },
-    { labelAr: 'أحياء', labelEn: 'Bology', value: 'bology' },
-    { labelAr: 'الكيمياء', labelEn: 'Chemistry', value: 'chemistry' },
-    { labelAr: 'الفيزياء', labelEn: 'Physics', value: 'physics' },
-    { labelAr: 'الجغرافيا', labelEn: 'Geography', value: 'geography' },
-    { labelAr: 'التاريخ', labelEn: 'History', value: 'history' },
-    { labelAr: 'الجيولوجيا', labelEn: 'Geology', value: 'geology' },
-    { labelAr: 'الدين', labelEn: 'Religion', value: 'religion' },
+
+export const studentContexts = [
+    { labelAr: 'طالب مدرسي', labelEn: 'School Student', value: 'school' },
+    { labelAr: 'طالب اختبارات اللغه الانجليزية', labelEn: 'English Exams student', value: 'englishExam' },
 ]
 
-export const studentTypes = [
-    { labelAr: 'طالب مدرسي', labelEn: 'School Student', value: 'school' },
-    { labelAr: 'طالب اختبارات اللغه الانجليزية', labelEn: 'English Exams student', value: 'exam' },
+export const courseContexts = [
+    { labelAr: 'دورة مرحلة درسية', labelEn: 'School Grades Course', value: 'school' },
+    { labelAr: 'دورة اختبارات اللغه الانجليزية', labelEn: 'English Exams Course', value: 'englishExam' },
+]
+
+export const subjectContexts = [
+    { labelAr: 'مادة مرحلة مدرسية', labelEn: 'School subject', value: 'school' },
+    { labelAr: 'مادة اختبارات اللغه الانجليزية', labelEn: 'English Exam subject', value: 'englishExam' },
 ]
 
 export const specialties = [
-    ...schoolSubjects,
-    ...exams,
+    ...subjects.englishExam,
+    ...subjects.school,
 ]
 
 export const courseStatuses = [
@@ -654,12 +649,3 @@ export const courseStatuses = [
     { labelAr: 'غير منشور', labelEn: 'Unpublished', value: 'unpublished' },
     { labelAr: 'مجدول', labelEn: 'Scheduled', value: 'scheduled' }
 ]
-
-export const courseCategories = {
-    school: [
-        ...schoolSubjects,
-    ],
-    exam: [
-        ...exams,
-    ]
-}

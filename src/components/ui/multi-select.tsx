@@ -26,6 +26,7 @@ import {
     CommandList,
     CommandSeparator,
 } from "@/components/ui/command";
+import { Label } from "@/components/ui/label";
 
 /**
  * Variants for the multi-select component to handle different styles.
@@ -63,7 +64,7 @@ interface MultiSelectProps
      */
     options: {
         /** The text to display for the option. */
-        label: string;
+        label?: string;
         /** The text to display for the option. */
         labelAr: string;
         /** The text to display for the option. */
@@ -77,16 +78,17 @@ interface MultiSelectProps
     /**
      * Callback function triggered when the selected values change.
      * Receives an array of the new selected values.
-     */
-    onValueChange: (value: string[]) => void;
+    */
+    onValueChange: (value: string[]) => void | React.Dispatch<React.SetStateAction<any[]>>;
 
     /** The default selected values when the component mounts. */
     defaultValue: string[];
 
+    label?: string
     /**
      * Placeholder text to be displayed when no values are selected.
      * Optional, defaults to "Select options".
-     */
+    */
     placeholder?: string;
 
     /**
@@ -137,6 +139,7 @@ export const MultiSelect = React.forwardRef<
             modalPopover = false,
             asChild = false,
             className,
+            label,
             ...props
         },
         ref
@@ -204,6 +207,7 @@ export const MultiSelect = React.forwardRef<
                 onOpenChange={setIsPopoverOpen}
                 modal={modalPopover}
             >
+                {label && <Label>{label}</Label>}
                 <PopoverTrigger asChild>
                     <Button
                         ref={ref}

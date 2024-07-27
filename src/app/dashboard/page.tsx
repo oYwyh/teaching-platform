@@ -19,9 +19,9 @@ export default function DashboardPage() {
                     Regions
                 </Button>
             </Link>
-            <Link href="/dashboard/exams">
+            <Link href="/dashboard/subjects">
                 <Button>
-                    Exams
+                    Subjects
                 </Button>
             </Link>
             <Link href="/dashboard/courses">

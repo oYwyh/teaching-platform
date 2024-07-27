@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import FormField from "@/components/ui/formField";
 import { Form, FormMessage } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getExams, getGovernorates, getRegions, getYears } from "@/actions/index.actions";
+import { getSubjects, getGovernorates, getRegions, getYears } from "@/actions/index.actions";
+import { StudentContexts } from "@/types/index.type";
 
 export default function Edit({ id, rowData, setPopOpen }: {
     id: string,
@@ -27,29 +28,30 @@ export default function Edit({ id, rowData, setPopOpen }: {
     setPopOpen: Dispatch<SetStateAction<boolean | undefined>>
 }) {
     const [open, setOpen] = useState(false);
-    const [studentType, setStudentType] = useState<string | undefined>(rowData.type ? rowData.type : '');
+    const [studentContext, setStudentContext] = useState<StudentContexts>(rowData.context);
     const [selectedRegion, setSelectedRegion] = useState<string | undefined>(rowData.region ? rowData.region : '');
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>({});
-    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>({});
-    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>({});
+    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>();
+    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
+    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
     const [error, setError] = useState<string | undefined>();
-    const [exams, setExams] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
+    const [englishExams, setEnglishExams] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
 
     useEffect(() => {
         const fetchRegions = async () => {
             const regions = await getRegions();
             const governorates = await getGovernorates();
             const years = await getYears();
-            const exams = await getExams()
+            const englishExams = await getSubjects("englishExam")
 
             setRegions(regions);
             setGovernorates(governorates);
             setYears(years);
-            setExams(exams)
+            setEnglishExams(englishExams)
         }
 
         fetchRegions();
     }, []);
+
 
     useEffect(() => {
         if (selectedRegion) {
@@ -69,8 +71,8 @@ export default function Edit({ id, rowData, setPopOpen }: {
             region: (rowData?.region) || "",
             governorate: (rowData?.governorate) || "",
             year: (rowData?.year) || '',
-            exam: (rowData?.exam) || '',
-            type: rowData?.type || "",
+            englishExam: (rowData?.englishExam) || '',
+            context: rowData?.context || "",
         }
     })
 
@@ -83,49 +85,21 @@ export default function Edit({ id, rowData, setPopOpen }: {
     });
 
     const onEditAccount = async (data: TEditSchema) => {
-        const changedData: { [key: string]: string | null } = {};
-
-        const userFields = Object.keys(rowData).filter(key => key !== 'id' && key !== 'role');
-
-        let hasChanges = false;
-
-        userFields.forEach((field) => {
-            const rowValue = rowData[field] ?? ""; // Treat null as an empty string
-            const formValue = data[field] ?? ""; // Treat undefined as an empty string
-
-            if (formValue.toLowerCase() !== rowValue.toLowerCase()) {
-                changedData[field] = formValue;
-                hasChanges = true;
-            } else {
-                changedData[field] = rowValue;
+        // Check for changes
+        const changes = Object.entries(data).reduce((acc, [key, value]) => {
+            if (rowData[key] !== value) {
+                acc[key] = value;
             }
-        });
+            return acc;
+        }, {} as Partial<TEditSchema>);
 
-        // Check if the type field has changed
-        if (data.type !== rowData.type) {
-            hasChanges = true;
-            if (data.type === 'school') {
-                changedData.exam = null;
-                changedData.parentPhone = data.parentPhone || null;
-                changedData.year = data.year || null;
-            } else if (data.type === 'exam') {
-                changedData.parentPhone = null;
-                changedData.year = null;
-            }
-        }
-
-        if (!hasChanges) {
-            setError("No changes detected.");
+        if (Object.keys(changes).length === 0) {
+            setError('No changes made.');
             return;
         }
 
-        Object.entries(changedData).forEach(([key, value]) => {
-            if (typeof value === 'string') {
-                changedData[key] = value.toLowerCase();
-            }
-        });
-
-        const result = await edit(changedData, id);
+        // Proceed with edit
+        const result = await edit(data, id);
 
         if (result?.error) {
             for (const [field, message] of Object.entries(result.error)) {
@@ -140,9 +114,6 @@ export default function Edit({ id, rowData, setPopOpen }: {
         setOpen(false);
         setPopOpen(false);
     };
-
-
-
 
     const onEditPassword = async (data: TPasswordSchema) => {
         const result = await editPassword(data, id);
@@ -176,9 +147,9 @@ export default function Edit({ id, rowData, setPopOpen }: {
                                 <ScrollArea className="max-h-[80vh] w-full rounded-md border p-4">
                                     <form onSubmit={accountForm.handleSubmit(onEditAccount)}>
                                         <div>
-                                            <FormField form={accountForm} name='type' select={'studentType'} setState={setStudentType} />
+                                            <FormField form={accountForm} name='context' select={'studentContext'} setState={setStudentContext} />
                                         </div>
-                                        {studentType && (
+                                        {studentContext && (
                                             <>
                                                 <div className="flex flex-row gap-3">
                                                     <FormField form={accountForm} name='firstname' />
@@ -187,7 +158,7 @@ export default function Edit({ id, rowData, setPopOpen }: {
                                                 <FormField form={accountForm} name="email" />
                                                 <div className="flex flex-row gap-3">
                                                     <FormField form={accountForm} name="phone" />
-                                                    {studentType == 'school' && (
+                                                    {studentContext == 'school' && (
                                                         <FormField form={accountForm} name='parentPhone' />
                                                     )}
                                                 </div>
@@ -200,11 +171,11 @@ export default function Edit({ id, rowData, setPopOpen }: {
                                                 <div className="flex flex-row gap-3 item-center">
                                                     {selectedRegion && (
                                                         <>
-                                                            {studentType == 'school' && (
-                                                                <FormField form={accountForm} name='year' select='year' region={selectedRegion} years={years} />
+                                                            {studentContext == 'school' && (
+                                                                <FormField form={accountForm} name='year' select='year' years={years} region={selectedRegion} />
                                                             )}
-                                                            {studentType == 'exam' && (
-                                                                <FormField form={accountForm} name='exam' select='exam' exams={exams} />
+                                                            {studentContext == 'englishExam' && (
+                                                                <FormField form={accountForm} name='englishExam' select='englishExam' englishExams={englishExams} />
                                                             )}
                                                         </>
                                                     )}

@@ -1,8 +1,11 @@
-import { UserRoles, UserTypes } from "@/types/index.type";
+import { UserRoles, StudentContexts } from "@/types/index.type";
 import { z } from "zod";
 
-const roles = ['admin', 'user']
-const types = ['school', 'exam']
+export const roles = ['admin', 'user', 'instructor'] as const
+export const courseStatuses = ['publiushed', 'unpublished', 'shcheduled'] as const
+export const courseContexts = ['school', 'englishExam'] as const
+export const subjectContexts = ['school', 'englishExam'] as const
+export const studentContexts = ['school', 'englishExam'] as const
 
 export const baseSchema = z.object({
     id: z.string().optional(),
@@ -10,13 +13,9 @@ export const baseSchema = z.object({
     lastname: z.string().min(1, "Lastname is required"),
     email: z.string().email(),
     phone: z.string(),
-    parentPhone: z.string().optional(),
     region: z.string(),
     governorate: z.string(),
-    year: z.string().optional(),
     picture: z.string().optional(),
-    type: z.enum(types as [UserTypes]).optional(),
-    role: z.enum(roles as [UserRoles]).optional(),
     password: z.string(),
     confirmPassword: z.string(),
 })

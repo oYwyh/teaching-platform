@@ -1,6 +1,6 @@
 'use client'
 
-import { getExams, getGovernorates, getRegions, getYears } from "@/actions/index.actions";
+import { getGovernorates, getRegions, getSubjects, getYears } from "@/actions/index.actions";
 import { add } from "@/actions/student.actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import { Form } from "@/components/ui/form";
 import FormField from "@/components/ui/formField";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { addSchema, TAddSchema } from "@/schemas/student.schema";
+import { StudentContexts } from "@/types/index.type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -23,24 +24,24 @@ import { useForm } from "react-hook-form";
 export default function Add() {
     const [open, setOpen] = useState(false)
 
-    const [studentType, setStudentType] = useState<string | undefined>();
+    const [studentContext, setStudentContext] = useState<StudentContexts>();
     const [selectedRegion, setSelectedRegion] = useState<string | undefined>();
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>({});
-    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>({});
-    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>({});
-    const [exams, setExams] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
+    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>();
+    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
+    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
+    const [englishExams, setEnglishExams] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
 
     useEffect(() => {
         const fetchRegions = async () => {
             const regions = await getRegions();
             const governorates = await getGovernorates();
             const years = await getYears();
-            const exams = await getExams()
+            const englishExams = await getSubjects("englishExam")
 
             setRegions(regions);
             setGovernorates(governorates);
             setYears(years);
-            setExams(exams)
+            setEnglishExams(englishExams)
         }
 
         fetchRegions();
@@ -59,7 +60,7 @@ export default function Add() {
 
     const onSubmit = async (data: { [key: string]: string | number } & TAddSchema) => {
 
-        if (studentType === 'school') {
+        if (studentContext === 'school') {
             if (!data.year) {
                 form.setError('year', { type: 'server', message: 'Year is required' });
                 return;
@@ -103,9 +104,9 @@ export default function Add() {
                         <ScrollArea className="max-h-[80vh] w-full rounded-md border p-4">
                             <form onSubmit={form.handleSubmit(onSubmit)}>
                                 <div>
-                                    <FormField form={form} name='type' select={'studentType'} setState={setStudentType} />
+                                    <FormField form={form} name='context' select={'studentContext'} setState={setStudentContext} />
                                 </div>
-                                {studentType && (
+                                {studentContext && (
                                     <>
                                         <div className="flex flex-row gap-3">
                                             <FormField form={form} name='firstname' />
@@ -114,7 +115,7 @@ export default function Add() {
                                         <FormField form={form} name="email" />
                                         <div className="flex flex-row gap-3">
                                             <FormField form={form} name="phone" />
-                                            {studentType == 'school' && (
+                                            {studentContext == 'school' && (
                                                 <FormField form={form} name='parentPhone' />
                                             )}
                                         </div>
@@ -127,11 +128,11 @@ export default function Add() {
                                         <div className="flex flex-row gap-3 item-center">
                                             {selectedRegion && (
                                                 <>
-                                                    {studentType == 'school' && (
-                                                        <FormField form={form} name='year' select='year' region={selectedRegion} years={years} />
+                                                    {studentContext == 'school' && (
+                                                        <FormField form={form} name='year' select='year' years={years} region={selectedRegion} />
                                                     )}
-                                                    {studentType == 'exam' && (
-                                                        <FormField form={form} name='exam' select='exam' exams={exams} />
+                                                    {studentContext == 'englishExam' && (
+                                                        <FormField form={form} name='englishExam' select='englishExam' englishExams={englishExams} />
                                                     )}
                                                 </>
                                             )}

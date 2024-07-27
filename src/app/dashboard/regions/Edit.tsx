@@ -25,9 +25,13 @@ export default function Edit({ id, rowData, setPopOpen }: {
     rowData: { [key: string]: string } & TEditSchema & { governorates: string[] } & { years: string[] },
     setPopOpen: Dispatch<SetStateAction<boolean | undefined>>
 }) {
+
+    const rowGovernorates = rowData.governorates.map((item: any) => item.governorate);
+    const rowYears = rowData.years.map((item: any) => item.year);
+
     const [open, setOpen] = useState(false);
-    const [selectedGovernorates, setSelectedGovernorates] = useState<string[]>(rowData.governorates || []);
-    const [selectedYears, setSelectedYears] = useState<string[]>(rowData.years || []);
+    const [selectedGovernorates, setSelectedGovernorates] = useState<string[]>(rowGovernorates || []);
+    const [selectedYears, setSelectedYears] = useState<string[]>(rowYears || []);
     const [error, setError] = useState<string | undefined>();
 
     const form = useForm<TEditSchema>({

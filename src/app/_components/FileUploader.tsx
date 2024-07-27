@@ -20,12 +20,16 @@ export default function FileUploader(
         open,
         setOpen,
         userId,
+        limit,
+        setState,
         pfp = false,
         picToDelete,
     }
         : {
             open: boolean,
-            setOpen: Dispatch<SetStateAction<boolean>>
+            setState?: Dispatch<SetStateAction<string>>
+            setOpen: Dispatch<SetStateAction<boolean>>,
+            limit?: number,
             userId?: string,
             pfp?: boolean,
             picToDelete?: string,
@@ -89,14 +93,21 @@ export default function FileUploader(
         setOpen(false)
         await revalidatePathAction('/profile');
     }).on('cancel-all', async () => {
-        await restoreDefaultPfp(userId);
-    }).on('file-added', (file) => {
         if (pfp) {
-            if (uppy.getFiles().length > 1) {
+            await restoreDefaultPfp(userId);
+        }
+    }).on('file-added', (file) => {
+        if (limit) {
+            if (uppy.getFiles().length > limit) {
                 uppy.removeFile(file.id);
             }
         }
-    });
+    }).on('thumbnail:generated', (file, preview) => {
+        if (setState) {
+            setState(preview)
+            setOpen(false)
+        }
+    })
 
     return (
         <>
