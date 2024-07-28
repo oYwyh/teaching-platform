@@ -1,7 +1,7 @@
 'use server'
 
 import db from "@/lib/db";
-import { columnsRegex, TFullUserData } from "@/types/index.type";
+import { columnsRegex, TFullUserData, TOptions, TIndex } from "@/types/index.type";
 import { eq, sql } from "drizzle-orm";
 import {
     governorateTable,
@@ -173,10 +173,9 @@ export const getRegions = async () => {
 
     const formattedRegions = regions.map(region => {
         return {
-            id: region.id,
             labelAr: region.region.replace('_', ' ').charAt(0).toUpperCase() + region.region.replace('_', ' ').slice(1).toLowerCase(),
             labelEn: region.region.replace('_', ' ').charAt(0).toUpperCase() + region.region.replace('_', ' ').slice(1).toLowerCase(),
-            value: region.region
+            value: region.id
         };
     });
 
@@ -186,7 +185,7 @@ export const getRegions = async () => {
 export const getGovernorates = async () => {
     const governoratesWithRegions = await db
         .select({
-            governorateId: governorateTable.id,
+            id: governorateTable.id,
             governorate: governorateTable.governorate,
             region: regionTable.region,
         })
@@ -194,7 +193,7 @@ export const getGovernorates = async () => {
         .leftJoin(regionTable, eq(regionTable.id, governorateTable.regionId));
 
     // Initialize formattedGovernorates with an index signature
-    const formattedGovernorates: { [key: string]: { labelAr: string; labelEn: string; value: string; }[] } = {};
+    const formattedGovernorates: TIndex<TOptions> = {};
 
     if (!governoratesWithRegions) {
         redirect('/');
@@ -213,7 +212,7 @@ export const getGovernorates = async () => {
         formattedGovernorates[region].push({
             labelAr: gov.governorate.charAt(0).toUpperCase() + gov.governorate.slice(1).replace('_', ' '), // Modify this for the Arabic label
             labelEn: gov.governorate.charAt(0).toUpperCase() + gov.governorate.slice(1).replace('_', ' '),
-            value: gov.governorate.toLowerCase().replace(' ', '_'),
+            value: gov.id,
         });
     });
 
@@ -223,7 +222,7 @@ export const getGovernorates = async () => {
 export const getYears = async () => {
     const yearsWithRegions = await db
         .select({
-            yearId: yearTable.id,
+            id: yearTable.id,
             year: yearTable.year,
             region: regionTable.region,
         })
@@ -231,7 +230,7 @@ export const getYears = async () => {
         .leftJoin(regionTable, eq(regionTable.id, yearTable.regionId));
 
     // Initialize formattedGovernorates with an index signature
-    const formattedYears: { [key: string]: { labelAr: string; labelEn: string; value: string; }[] } = {};
+    const formattedYears: TIndex<TOptions> = {};
 
     if (!yearsWithRegions) {
         redirect('/');
@@ -250,7 +249,7 @@ export const getYears = async () => {
         formattedYears[region].push({
             labelAr: year.year.charAt(0).toUpperCase() + year.year.slice(1).replace('_', ' '), // Modify this for the Arabic label
             labelEn: year.year.charAt(0).toUpperCase() + year.year.slice(1).replace('_', ' '),
-            value: year.year.toLowerCase().replace(' ', '_'),
+            value: year.id,
         });
     });
 
@@ -258,46 +257,72 @@ export const getYears = async () => {
 
 };
 
-export const getSubjects = async (context: 'school' | 'englishExam') => {
-    const subjects = await db.select().from(subjectTable).where(eq(subjectTable.context, context));
-    // Fetch region names from the database
+export const getSubjects = async (context?: 'school' | 'englishExam') => {
+    const subjects = await db.select().from(subjectTable);
     const regions = await db.select().from(regionTable);
+
     const regionMap = regions.reduce((map, region) => {
         map[region.id] = region.region;
         return map;
     }, {} as Record<number, string>);
 
+    const englishExams = subjects.filter(subject => subject.context === 'englishExam').map((subject) => ({
+        labelAr: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '),
+        labelEn: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '),
+        value: subject.id,
+    }));
+
     if (context === 'englishExam') {
-        // Format as a flat array
-        const formattedSubjects: { labelAr: string; labelEn: string; value: string; }[] = subjects.map((subject) => ({
-            labelAr: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '), // Modify this for the Arabic label
-            labelEn: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '),
-            value: subject.subject.toLowerCase().replace(' ', '_'),
-        }));
-
-        return formattedSubjects;
+        return englishExams;
     } else if (context === 'school') {
-        // Initialize formattedSubjects with a dynamic object
-        const formattedSubjects: Record<string, { labelAr: string; labelEn: string; value: string; }[]> = {};
+        const schoolSubjects = subjects.filter(subject => subject.context === 'school');
+        const formattedSubjects: Record<string, TOptions> = {};
 
-        subjects.forEach((subject) => {
+        schoolSubjects.forEach((subject) => {
             const regionName = regionMap[subject.regionId];
-            if (!regionName) return; // Skip if regionId is not mapped
+            if (!regionName) return;
 
             if (!formattedSubjects[regionName]) {
                 formattedSubjects[regionName] = [];
             }
 
             formattedSubjects[regionName].push({
-                labelAr: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '), // Modify this for the Arabic label
+                labelAr: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '),
                 labelEn: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '),
-                value: subject.subject.toLowerCase().replace(' ', '_'),
+                value: subject.id,
             });
+        });
+
+        return formattedSubjects;
+    } else {
+        const allSubjects = subjects.filter(subject => subject.context === 'school');
+        const formattedSubjects: Record<string, TOptions> = {};
+
+        allSubjects.forEach((subject) => {
+            const regionName = regionMap[subject.regionId];
+            if (!regionName) return;
+
+            if (!formattedSubjects[regionName]) {
+                formattedSubjects[regionName] = [];
+            }
+
+            formattedSubjects[regionName].push({
+                labelAr: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '),
+                labelEn: subject.subject.charAt(0).toUpperCase() + subject.subject.slice(1).replace('_', ' '),
+                value: subject.id,
+            });
+        });
+
+        Object.keys(formattedSubjects).forEach(region => {
+            formattedSubjects[region] = [...formattedSubjects[region], ...englishExams];
         });
 
         return formattedSubjects;
     }
 };
+
+
+
 
 export const getInstructors = async () => {
     const data = await db.select()

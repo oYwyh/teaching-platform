@@ -1,3 +1,6 @@
+export type TIndex<T> = { [key: string]: T }
+export type TOptions = { labelAr: string; labelEn: string; value: number | string }[]
+
 export type TTables = "user" | "instructor" | "region" | "governorate" | "year" | 'course' | 'subject'
 export type UserRoles = "admin" | "user" | "instructor"
 export type StudentContexts = "school" | "englishExam"

@@ -4,20 +4,14 @@ import { z } from "zod";
 export const createSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().min(1, "Description is required"),
-    instructorId: z.number(),
-    price: z.string(),
-    currency: z.string(),
-    enrolledStudents: z.number(),
-    thumbnail: z.string(),
-    regionId: z.number(),
-    yearId: z.number(),
-    subjectId: z.number(),
+    instructor: z.string(),
+    region: z.string(),
+    year: z.string(),
+    subject: z.string(),
     context: z.enum(courseContexts),
     status: z.enum(courseStatuses),
-    releasedAt: z.date(),
-    updatedAt: z.date(),
-    scheduledPublishDate: z.date(),
-    scheduledUnpublishDate: z.date()
+    scheduledPublishDate: z.date().optional(),
+    scheduledUnpublishDate: z.date().optional()
 })
 
 export type TCreateSchema = { [key: string]: string } & z.infer<typeof createSchema>

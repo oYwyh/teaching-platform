@@ -6,6 +6,8 @@ import Add from "@/app/dashboard/courses/create/page";
 import { courseTable, instructorTable, roleTable, userTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { TCourse } from "@/types/index.type";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 async function getData(): Promise<TCourse[]> {
     const courses = await db.query.courseTable.findMany().execute()
@@ -20,7 +22,10 @@ export default async function CoursePage() {
 
     return (
         <div>
-            <Add />
+            {/* <Add /> */}
+            <Link href="/dashboard/courses/create">
+                <Button>create</Button>
+            </Link>
             <DataTable
                 columns={CoursesTableColumns}
                 search="title"

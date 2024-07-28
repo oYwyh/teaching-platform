@@ -2,52 +2,45 @@ import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Upload } from 'lucide-react';
 import FileUploader from '@/app/_components/FileUploader';
 import { Label } from '@/components/ui/label';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { UppyFile } from '@uppy/core';
 import { Meta } from '@uppy/core';
 
-interface ThumbnailUploadBoxProps {
-    thumbnail: { file: UppyFile<Meta, Record<string, never>>, preview: string } | undefined;
-    setThumbnail: Dispatch<SetStateAction<{ file: UppyFile<Meta, Record<string, never>>, preview: string } | undefined>>;
+interface PromoUploadBoxProps {
+    promo: { file: UppyFile<Meta, Record<string, never>>, preview: string } | undefined;
+    setPromo: Dispatch<SetStateAction<{ file: UppyFile<Meta, Record<string, never>>, preview: string } | undefined>>;
     uploadProgress: number;
 }
 
-export default function ThumbnailUploadBox({ thumbnail, setThumbnail, uploadProgress }: ThumbnailUploadBoxProps) {
+export default function PromoUploadBox({ promo, setPromo, uploadProgress }: PromoUploadBoxProps) {
     const [open, setOpen] = useState(false);
 
     return (
         <>
-            <FileUploader open={open} setOpen={setOpen} setState={setThumbnail} limit={1} sizeLimit={10 * 1024 * 1024} />
+            <FileUploader open={open} setOpen={setOpen} setState={setPromo} format='vid' limit={1} sizeLimit={100 * 1024 * 1024} />
             <div
                 className="flex flex-col items-center justify-center w-full max-w-md mx-auto border border-dashed border-gray-300 rounded-lg"
                 onClick={() => setOpen(!open)}
 
             >
                 <Label
-                    htmlFor="thumbnail-upload"
+                    htmlFor="promo-upload"
                     className="flex flex-col items-center justify-center w-full h-64 cursor-pointer"
                 >
-                    {thumbnail ? (
-                        <Image
-                            src={thumbnail.preview}
-                            width={0}
-                            height={0}
-                            sizes="100vw"
-                            style={{ width: '100%', height: 'auto' }}
-                            alt="Thumbnail Preview"
-                            className="object-cover w-full h-full rounded-md"
-                        />
+                    {promo ? (
+                        <video className="w-full h-full rounded-md object-cover" controls>
+                            <source src={promo.preview} type="video/mp4" />
+                        </video>
                     ) : (
                         <div className="flex flex-col items-center justify-center text-gray-500">
                             <Upload className="w-12 h-12 mb-2" />
-                            <span className="text-sm">Upload Course Thumbnail</span>
-                            <span className="text-xs text-gray-400">PNG, JPG, GIF up to 10MB</span>
+                            <span className="text-sm">Upload Course Promo</span>
+                            <span className="text-xs text-gray-400">MP4, WEBM up to 100MB</span>
                         </div>
                     )}
                 </Label>
-                {thumbnail && uploadProgress === 0 && (
-                    <Button className="mt-2" onClick={() => setThumbnail(undefined)}>Remove Thumbnail</Button>
+                {promo && uploadProgress === 0 && (
+                    <Button className="mt-2" onClick={() => setPromo(undefined)}>Remove Promo</Button>
                 )}
                 {uploadProgress > 0 && (
                     <div className="w-full mt-2">

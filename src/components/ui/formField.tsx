@@ -48,7 +48,8 @@ type TFormField = {
     englishExams?: { labelAr: string; labelEn: string; value: string; }[],
     // years?: { labelAr: string; labelEn: string; value: string; }[],
     instructors?: { id: number, instructor: string }[],
-    context?: { [key: string]: string } | string
+    context?: { [key: string]: string } | string,
+    subjects?: { [key: string]: { labelAr: string; labelEn: string; value: string; }[]; },
 }
 
 export default function FormField({
@@ -68,7 +69,8 @@ export default function FormField({
     years,
     englishExams,
     instructors,
-    context
+    context,
+    subjects
 }: TFormField) {
     const {
         field,
@@ -171,38 +173,38 @@ export default function FormField({
                                 )}
                                 {select == 'year' && region && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <FormLabel className="capitalize" hidden={!!type}>{label || name}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
                                                     <Button
                                                         variant="outline"
                                                         role="combobox"
-                                                        className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
+                                                        className={cn("w-full justify-between", !value && "text-muted-foreground")}
                                                     >
                                                         {value
-                                                            ? yearsArray[region]?.find((year: any) => year?.value === value)?.labelEn
+                                                            ? yearsArray[region]?.find((year) => year?.value == value)?.labelEn
                                                             : "Select year"}
                                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-full p-0" align="start">
-                                                <Command className="w-[100%]">
+                                                <Command className="w-full">
                                                     <CommandInput placeholder="Search..." />
-                                                    <CommandGroup className="overflow-y-scroll max-h-[200px]">
-                                                        {yearsArray[region]?.map((year: any) => (
+                                                    <CommandGroup className="overflow-y-scroll max-h-52">
+                                                        {yearsArray[region]?.map((year) => (
                                                             <CommandItem
                                                                 value={year.value}
                                                                 key={year.value}
                                                                 onSelect={() => {
-                                                                    field.onChange(year.value)
+                                                                    field.onChange(year.value);
                                                                 }}
                                                             >
                                                                 <Check
                                                                     className={cn(
                                                                         "mr-2 h-4 w-4",
-                                                                        year.value === value ? "opacity-100" : "opacity-0"
+                                                                        year.value == value ? "opacity-100" : "opacity-0"
                                                                     )}
                                                                 />
                                                                 {year.labelEn}
@@ -213,6 +215,7 @@ export default function FormField({
                                             </PopoverContent>
                                         </Popover>
                                         <FormMessage />
+
                                     </>
                                 )}
                                 {select == 'region' && (
@@ -469,6 +472,55 @@ export default function FormField({
                                                     <CommandInput placeholder="Search subject..." />
                                                     <CommandGroup className="overflow-y-scroll max-h-[200px]">
                                                         {subjects[context]?.filter((subject: any) => !existing?.includes(subject.value)).map((subject: any) => (
+                                                            <CommandItem
+                                                                value={subject.value}
+                                                                key={subject.value}
+                                                                onSelect={() => {
+                                                                    field.onChange(subject.value)
+                                                                    if (setState) {
+                                                                        setState(subject.id)
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        subject.value === value ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {subject.labelEn}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </>
+                                )}
+                                {select == 'subject' && region && (
+                                    <>
+                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger disabled={disabled} asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
+                                                    >
+                                                        {value
+                                                            ? subjects[region]?.find((subject: any) => subject?.value === value)?.labelEn
+                                                            : "Select..."}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[100%] p-0" align="start">
+                                                <Command className="w-[100%]">
+                                                    <CommandInput placeholder="Search subject..." />
+                                                    <CommandGroup className="overflow-y-scroll max-h-[200px]">
+                                                        {subjects[region].map((subject: any) => (
                                                             <CommandItem
                                                                 value={subject.value}
                                                                 key={subject.value}
