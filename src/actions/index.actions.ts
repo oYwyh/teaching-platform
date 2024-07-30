@@ -129,43 +129,7 @@ export const uniqueColumnsValidations = async (data: any, userId?: string) => {
 };
 
 
-const tablesMap = {
-    user: userTable,
-    region: regionTable,
-    governorate: governorateTable,
-    year: yearTable,
-    instructor: instructorTable,
-    course: courseTable,
-    subject: subjectTable,
-};
 
-
-export async function deleteAction(id: string | number | number[] | string[], table: keyof typeof tablesMap) {
-
-    let ids;
-    if (typeof id == 'object') ids = id.map((item: any) => item.subjectId);
-    const tableDefinition = tablesMap[table];
-
-    if (!tableDefinition) {
-        throw new Error("Invalid table name");
-    }
-
-    let user;
-    if (ids && ids?.length > 0) {
-        user = true
-        ids?.map(async (id) => {
-            await db.delete(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
-        })
-    } else {
-        user = await db.delete(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
-    }
-
-    if (user) {
-        revalidatePath('/dashboard')
-    } else {
-        throw new Error("Deletion failed");
-    }
-}
 
 export const getRegions = async () => {
     const regions = await db.select().from(regionTable);
@@ -215,6 +179,7 @@ export const getGovernorates = async () => {
             value: gov.id,
         });
     });
+
 
     return formattedGovernorates;
 };
@@ -276,7 +241,7 @@ export const getSubjects = async (context?: 'school' | 'englishExam') => {
         return englishExams;
     } else if (context === 'school') {
         const schoolSubjects = subjects.filter(subject => subject.context === 'school');
-        const formattedSubjects: Record<string, TOptions> = {};
+        const formattedSubjects: Record<string, Array<{ labelAr: string; labelEn: string; value: number }>> = {};
 
         schoolSubjects.forEach((subject) => {
             const regionName = regionMap[subject.regionId];
@@ -296,7 +261,7 @@ export const getSubjects = async (context?: 'school' | 'englishExam') => {
         return formattedSubjects;
     } else {
         const allSubjects = subjects.filter(subject => subject.context === 'school');
-        const formattedSubjects: Record<string, TOptions> = {};
+        const formattedSubjects: Record<string, Array<{ labelAr: string; labelEn: string; value: number }>> = {};
 
         allSubjects.forEach((subject) => {
             const regionName = regionMap[subject.regionId];
@@ -323,7 +288,6 @@ export const getSubjects = async (context?: 'school' | 'englishExam') => {
 
 
 
-
 export const getInstructors = async () => {
     const data = await db.select()
         .from(userTable)
@@ -332,8 +296,8 @@ export const getInstructors = async () => {
         .where(eq(roleTable.role, 'instructor'));
 
     const instructors = data.map((item: any) => ({
-        id: item.instructor.id,
-        instructor: item.user.firstname + ' ' + item.user.lastname
+        label: item.user.firstname + ' ' + item.user.lastname,
+        value: item.instructor.id,
     }));
 
     return instructors;
@@ -357,8 +321,8 @@ export const getUser = async (): Promise<TFullUserData | null> => {
         return {
             ...user,
             role: userRole,
-            englishExam: student?.englishExam ?? undefined,
-            year: student?.year ?? undefined,
+            subjectId: student?.subjectId ?? undefined,
+            yearId: student?.yearId ?? undefined,
             parentPhone: student?.parentPhone ?? undefined,
             context: student?.context,
         };
@@ -376,3 +340,57 @@ export const getUser = async (): Promise<TFullUserData | null> => {
         return { ...user, role: userRole };
     }
 };
+
+
+const tablesMap = {
+    user: userTable,
+    region: regionTable,
+    governorate: governorateTable,
+    year: yearTable,
+    instructor: instructorTable,
+    course: courseTable,
+    subject: subjectTable,
+};
+
+const columnMap = {
+    region: "region",
+    governorate: "governorate",
+    year: "year",
+    subject: "subject",
+};
+
+export const getById = async (id: string | number | undefined, table: keyof typeof tablesMap, column: boolean = false) => {
+
+    const tableDefinition = tablesMap[table];
+    const columnName = columnMap[table]; // Use provided column or default to mapped column
+
+    const result = await db.select().from(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
+
+    return column ? result[0]?.[columnName] : result[0];
+}
+
+export async function deleteAction(id: string | number | number[] | string[], table: keyof typeof tablesMap) {
+    let ids;
+    if (typeof id == 'object') ids = id.map((item: any) => item.subjectId);
+    const tableDefinition = tablesMap[table];
+
+    if (!tableDefinition) {
+        throw new Error("Invalid table name");
+    }
+
+    let user;
+    if (ids && ids?.length > 0) {
+        user = true
+        ids?.map(async (id) => {
+            await db.delete(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
+        })
+    } else {
+        user = await db.delete(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
+    }
+
+    if (user) {
+        revalidatePath('/dashboard')
+    } else {
+        throw new Error("Deletion failed");
+    }
+}

@@ -17,16 +17,17 @@ import {
 } from "@/components/ui/select"
 import { TInsertedCredential } from "@/types/auth.type";
 import { useEffect, useState } from "react";
+import { TIndex, TOptions } from "@/types/index.type";
 
 
 export default function Register({ insertedCredential }: { insertedCredential: TInsertedCredential | null }) {
 
-    const [studentContext, setStudentContext] = useState<string | undefined>();
-    const [selectedRegion, setSelectedRegion] = useState<string | undefined>();
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>();
-    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
-    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
-    const [englishExams, setEnglishExams] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
+    const [studentContext, setStudentContext] = useState<string>('');
+    const [selectedRegion, setSelectedRegion] = useState<string>('');
+    const [regions, setRegions] = useState<TOptions>([]);
+    const [governorates, setGovernorates] = useState<TIndex<TOptions>>({});
+    const [years, setYears] = useState<TIndex<TOptions>>({});
+    const [englishExams, setEnglishExams] = useState<TOptions>([]);
 
     useEffect(() => {
         const fetchRegions = async () => {
@@ -46,8 +47,8 @@ export default function Register({ insertedCredential }: { insertedCredential: T
 
     useEffect(() => {
         if (selectedRegion) {
-            form.resetField('governorate');
-            form.resetField('year');
+            form.resetField('governorateId');
+            form.resetField('yearId');
         }
     }, [selectedRegion])
 
@@ -55,7 +56,8 @@ export default function Register({ insertedCredential }: { insertedCredential: T
         resolver: zodResolver(registerSchema)
     })
 
-    const onSubmit = async (data: { [key: string]: string | number } & TRegisterSchema) => {
+    const onSubmit = async (data: TIndex<string | number> & TRegisterSchema) => {
+        console.log(data)
         Object.entries(data).forEach(([key, value]) => {
             if (typeof value === 'string' && key != 'context') {
                 data[key] = value.toLowerCase();
@@ -100,10 +102,10 @@ export default function Register({ insertedCredential }: { insertedCredential: T
                                 )}
                             </div>
                             <div className="flex flex-row gap-3 item-center">
-                                <FormField form={form} name='region' select='region' regions={regions} setState={setSelectedRegion} />
+                                <FormField form={form} name='regionId' select='region' regions={regions} setState={setSelectedRegion} label="Region" />
                                 {selectedRegion && (
                                     <>
-                                        <FormField form={form} name='governorate' select='governorate' governorates={governorates} region={selectedRegion} />
+                                        <FormField form={form} name='governorateId' select='governorate' governorates={governorates} region={selectedRegion} label="governorate" />
                                     </>
                                 )}
                             </div>
@@ -111,10 +113,10 @@ export default function Register({ insertedCredential }: { insertedCredential: T
                                 {selectedRegion && (
                                     <>
                                         {studentContext == 'school' && (
-                                            <FormField form={form} name='year' select='year' years={years} region={selectedRegion} />
+                                            <FormField form={form} name='yearId' select='year' years={years} region={selectedRegion} label={'year'} />
                                         )}
                                         {studentContext == 'englishExam' && (
-                                            <FormField form={form} name='englishExam' select='englishExam' englishExams={englishExams} />
+                                            <FormField form={form} name='subjectId' select='englishExam' subjects={englishExams} label="English Exam" />
                                         )}
                                     </>
                                 )}

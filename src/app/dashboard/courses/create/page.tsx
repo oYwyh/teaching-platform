@@ -1,6 +1,6 @@
 'use client'
 
-import { getGovernorates, getInstructors, getRegions, getSubjects, getYears } from "@/actions/index.actions";
+import { getById, getGovernorates, getInstructors, getRegions, getSubjects, getYears } from "@/actions/index.actions";
 import { add } from "@/actions/instructor.actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,12 +24,12 @@ import { Form, FormItem, FormLabel, FormField as CFormField, FormControl, FormMe
 import FormField from "@/components/ui/formField";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { createSchema, TCreateSchema } from "@/schemas/course.schema";
-import { CourseContexts } from "@/types/index.type";
+import { CourseContexts, TIndex, TOptions } from "@/types/index.type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import CurrencyInput from 'react-currency-input-field'
-import { currencyLocales } from "@/constants/index.constant";
+import { currencyLocales, governorates } from "@/constants/index.constant";
 import FileUploader from "@/app/_components/FileUploader";
 import ThumbnailUploadBox from "@/app/dashboard/_components/ThumbnailUploadBox";
 import { computeSHA256 } from "@/lib/funcs";
@@ -43,14 +43,14 @@ import { redirect } from "next/navigation";
 export default function CourseCreatePage() {
     const [open, setOpen] = useState<boolean>();
     const [courseContext, setCourseContext] = useState<CourseContexts>();
-    const [selectedRegion, setSelectedRegion] = useState<string | undefined>();
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>();
-    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
-    const [subjects, setSubjects] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
-    const [instructors, setInstructors] = useState<{ id: number; instructor: string; }[]>();
+    const [selectedRegionId, setSelectedRegionId] = useState<number>();
+    const [selectedRegion, setSelectedRegion] = useState<string>();
+    const [regions, setRegions] = useState<TOptions>();
+    const [years, setYears] = useState<TIndex<TOptions>>();
+    const [subjects, setSubjects] = useState<Record<string, TIndex<TOptions>>>();
+    const [instructors, setInstructors] = useState<{ label: string; value: number; }[]>();
 
     const [currency, setCurrency] = useState<string | undefined>();
-    const [instructorId, setInstructorId] = useState<number | undefined>();
     const [price, setPrice] = useState<number | string>();
 
     const [error, setError] = useState<string | undefined>();
@@ -85,18 +85,25 @@ export default function CourseCreatePage() {
         }
     }, [selectedRegion])
 
-    const form = useForm<>({
+    useEffect(() => {
+        async function fetchRegion() {
+            if (selectedRegionId) {
+                const region = await getById(selectedRegionId, 'region', true)
+                setSelectedRegion(region)
+            }
+        }
+        if (selectedRegionId) {
+            fetchRegion()
+        }
+    }, [selectedRegionId])
+
+    const form = useForm<TCreateSchema>({
+        resolver: zodResolver(createSchema)
     })
 
     const onSubmit = async (data: { [key: string]: string | number } & TCreateSchema) => {
-        console.log(data)
-        return;
         try {
             // Validate required fields
-            if (!instructorId) {
-                setError('Please select an instructor');
-                return;
-            }
             if (!price) {
                 form.setError('price', { message: 'Please enter price' });
                 return;
@@ -214,7 +221,7 @@ export default function CourseCreatePage() {
             setError('')
             // Proceed with form submission
             const columnsToDelete = ['instructor'];
-            const columnsToAdd = { price, currency, instructorId };
+            const columnsToAdd = { price, currency };
 
             for (const column of columnsToDelete) {
                 delete data[column];
@@ -223,8 +230,6 @@ export default function CourseCreatePage() {
             for (const column in columnsToAdd) {
                 data[column] = columnsToAdd[column];
             }
-            console.log(data)
-            return;
 
             await create(data);
             return redirect("/dashboard/courses");
@@ -251,13 +256,13 @@ export default function CourseCreatePage() {
                                 <>
                                     <FormField form={form} name="title" />
                                     <FormField form={form} name="description" textarea />
-                                    <FormField form={form} name='instructor' select={'instructor'} instructors={instructors} setState={setInstructorId} />
+                                    <FormField form={form} name='instructorId' select={'instructor'} instructors={instructors} />
                                     <div className="flex flex-row gap-3 item-center">
-                                        <FormField form={form} name='region' select='region' regions={regions} setState={setSelectedRegion} />
+                                        <FormField form={form} name='regionId' select='region' regions={regions} setState={setSelectedRegionId} />
                                         {selectedRegion && (
                                             <>
-                                                <FormField form={form} name='year' select='year' years={years} region={selectedRegion} />
-                                                <FormField form={form} name='subject' select='subject' subjects={subjects} region={selectedRegion} />
+                                                <FormField form={form} name='yearId' select='year' years={years} region={selectedRegion} />
+                                                <FormField form={form} name='subjectId' select='subject' subjects={subjects} region={selectedRegion} />
                                             </>
                                         )}
                                     </div>

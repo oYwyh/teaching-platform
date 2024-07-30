@@ -8,7 +8,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { courseContexts, courseStatuses, governorates as governoratesConst, regions as regionsConst, specialties, studentContexts, subjectContexts, subjects, years as yearsConst } from "@/constants/index.constant";
+import { courseContexts, courseStatuses, governorates as governoratesConst, regions as regionsConst, specialties, studentContexts, subjectContexts, subjects as subjectsConst, years as yearsConst } from "@/constants/index.constant";
 import {
     Command,
     CommandDialog,
@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { TIndex, TOptions } from "@/types/index.type";
 
 
 type TFormField = {
@@ -42,14 +43,12 @@ type TFormField = {
     setState?: any,
     existing?: string[],
     region?: string,
-    regions?: { labelAr: string; labelEn: string; value: string; }[],
-    governorates?: { [key: string]: { labelAr: string; labelEn: string; value: string; }[]; },
-    years?: { [key: string]: { labelAr: string; labelEn: string; value: string; }[]; },
-    englishExams?: { labelAr: string; labelEn: string; value: string; }[],
-    // years?: { labelAr: string; labelEn: string; value: string; }[],
-    instructors?: { id: number, instructor: string }[],
-    context?: { [key: string]: string } | string,
-    subjects?: { [key: string]: { labelAr: string; labelEn: string; value: string; }[]; },
+    regions?: TOptions,
+    governorates?: TIndex<TOptions>,
+    years?: TIndex<TOptions>,
+    instructors?: { label: string, value: number }[],
+    context?: TIndex<string> | string,
+    subjects?: TIndex<TOptions> | TOptions,
 }
 
 export default function FormField({
@@ -67,7 +66,6 @@ export default function FormField({
     regions,
     governorates,
     years,
-    englishExams,
     instructors,
     context,
     subjects
@@ -84,6 +82,7 @@ export default function FormField({
     const regionsArray = regions ? regions : regionsConst
     const governoratesArray = governorates ? governorates : governoratesConst
     const yearsArray = years ? years : yearsConst
+    const subjectsArray = subjects ? subjects : subjectsConst
 
     return (
         <>
@@ -247,7 +246,10 @@ export default function FormField({
                                                                 key={region.value}
                                                                 onSelect={() => {
                                                                     field.onChange(region.value);
-                                                                    setState(region.value);
+                                                                    if (typeof value == 'number') {
+                                                                    } else {
+                                                                        setState(region.value);
+                                                                    }
                                                                 }}
                                                             >
                                                                 <Check
@@ -461,7 +463,7 @@ export default function FormField({
                                                         className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
                                                     >
                                                         {value
-                                                            ? subjects[context]?.find((subject: any) => subject?.value === value)?.labelEn
+                                                            ? subjectsArray[context]?.find((subject: any) => subject?.value === value)?.labelEn
                                                             : "Select..."}
                                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                     </Button>
@@ -471,7 +473,7 @@ export default function FormField({
                                                 <Command className="w-[100%]">
                                                     <CommandInput placeholder="Search subject..." />
                                                     <CommandGroup className="overflow-y-scroll max-h-[200px]">
-                                                        {subjects[context]?.filter((subject: any) => !existing?.includes(subject.value)).map((subject: any) => (
+                                                        {subjectsArray[context]?.filter((subject: any) => !existing?.includes(subject.value)).map((subject: any) => (
                                                             <CommandItem
                                                                 value={subject.value}
                                                                 key={subject.value}
@@ -544,7 +546,7 @@ export default function FormField({
                                         <FormMessage />
                                     </>
                                 )}
-                                {select == 'englishExam' && englishExams && (
+                                {select == 'englishExam' && subjects && (
                                     <>
                                         <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
                                         <Popover>
@@ -556,7 +558,7 @@ export default function FormField({
                                                         className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
                                                     >
                                                         {value
-                                                            ? englishExams?.find((subject: any) => subject?.value === value)?.labelEn
+                                                            ? subjects?.find((subject: any) => subject?.value === value)?.labelEn
                                                             : "Select..."}
                                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                     </Button>
@@ -566,7 +568,7 @@ export default function FormField({
                                                 <Command className="w-[100%]">
                                                     <CommandInput placeholder="Search subject..." />
                                                     <CommandGroup className="overflow-y-scroll max-h-[200px]">
-                                                        {englishExams.map((subject: any) => (
+                                                        {subjects.map((subject: any) => (
                                                             <CommandItem
                                                                 value={subject.value}
                                                                 key={subject.value}
@@ -602,7 +604,7 @@ export default function FormField({
                                                         className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
                                                     >
                                                         {value
-                                                            ? instructors?.find((instructor: any) => instructor?.instructor === value)?.instructor
+                                                            ? instructors?.find((instructor: any) => instructor?.value === value)?.label
                                                             : "Select instructor"}
                                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                     </Button>
@@ -615,20 +617,19 @@ export default function FormField({
                                                     <CommandGroup className="overflow-y-scroll max-h-[200px]">
                                                         {instructors?.map((instructor: any) => (
                                                             <CommandItem
-                                                                value={instructor.instructor}
-                                                                key={instructor.instructor}
+                                                                value={instructor.value}
+                                                                key={instructor.value}
                                                                 onSelect={() => {
-                                                                    field.onChange(instructor.instructor);
-                                                                    setState(instructor.id)
+                                                                    field.onChange(instructor.value);
                                                                 }}
                                                             >
                                                                 <Check
                                                                     className={cn(
                                                                         "mr-2 h-4 w-4",
-                                                                        instructor.instructor === instructor ? "opacity-100" : "opacity-0"
+                                                                        instructor.value === value ? "opacity-100" : "opacity-0"
                                                                     )}
                                                                 />
-                                                                {instructor.instructor}
+                                                                {instructor.label}
                                                             </CommandItem>
                                                         ))}
                                                     </CommandGroup>

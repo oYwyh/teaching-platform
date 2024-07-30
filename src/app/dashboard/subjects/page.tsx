@@ -23,7 +23,8 @@ async function getData() {
                 context: subject.context,
                 createdAt: subject.createdAt,
                 updatedAt: subject.updatedAt,
-                regions: []
+                regions: [],
+                table: 'subject'
             });
         }
 

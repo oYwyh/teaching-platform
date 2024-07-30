@@ -14,7 +14,7 @@ import { revalidatePath } from "next/cache";
 export async function add(
     data: TAddSchema,
 ) {
-    const { firstname, lastname, email, phone, region, governorate, bio, specialty, password } = data
+    const { firstname, lastname, email, phone, regionId, governorateId, bio, specialty, password } = data
 
     const unqiueValidation = await uniqueColumnsValidations(data)
 
@@ -39,8 +39,8 @@ export async function add(
         lastname,
         email,
         phone,
-        region,
-        governorate,
+        regionId,
+        governorateId,
         password: passwordHash,
     });
 

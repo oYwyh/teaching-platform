@@ -8,8 +8,9 @@ import { useForm } from "react-hook-form";
 import { updateProfileSchema, TUpdateProfileSchema } from "@/schemas/profile.schema";
 import { useEffect, useState } from "react";
 import { updateProfile } from "@/actions/profile.actions";
-import { TFullUserData, TUser } from '@/types/index.type';
+import { TFullUserData, TIndex, TUser } from '@/types/index.type';
 import { redirect } from 'next/navigation';
+import { getById } from '@/actions/index.actions';
 
 type TFormUpdateProfile = {
   user: TFullUserData
@@ -28,10 +29,10 @@ export default function FormUpdateProfile({
     email: user.email,
     phone: user.phone,
     parentPhone: user.parentPhone,
-    region: user.region,
-    governorate: user.governorate,
-    year: user.year,
-    englishExam: user.englishExam,
+    regionId: user.regionId,
+    governorateId: user.governorateId,
+    yearId: user.yearId,
+    subjectId: user.subjectId,
     context: user.context as "school", // Add type assertion here
     bio: user.bio,
     specialty: user.specialty
@@ -46,10 +47,10 @@ export default function FormUpdateProfile({
       email: user.email,
       phone: user.phone,
       parentPhone: user.parentPhone,
-      region: user.region,
-      governorate: user.governorate,
-      year: user.year,
-      englishExam: user.englishExam,
+      regionId: user.regionId,
+      governorateId: user.governorateId,
+      yearId: user.yearId,
+      subjectId: user.subjectId,
       context: user.context,
       bio: user.bio,
       specialty: user.specialty
@@ -63,18 +64,25 @@ export default function FormUpdateProfile({
   }, [userData])
 
 
-  const onSubmit = async (data: { [key: string]: string | null } & TUpdateProfileSchema) => {
+  const onSubmit = async (data: TIndex<string | null> & TUpdateProfileSchema) => {
     let userFields = Object.keys(userData).filter(key => key !== 'id' && key !== 'role') as (keyof TUpdateProfileSchema)[];
     let fieldsNotToCompare: string[] = [];
     let fieldsToCompare: string[] = [];
+    const dataNotToPass = ['region', 'governorate', 'year', 'subject']
 
     userFields.forEach((field) => {
-      if (data[field]?.toLowerCase() !== userData[field]?.toLowerCase()) {
-        fieldsToCompare.push(field);
-      } else {
-        fieldsNotToCompare.push(field);
+      if (typeof data[field] === 'string' && typeof userData[field] === 'string') {
+        if (data[field].toLowerCase() !== userData[field].toLowerCase()) {
+          fieldsToCompare.push(field);
+        } else {
+          fieldsNotToCompare.push(field);
+        }
       }
     });
+
+    for (const field of dataNotToPass) {
+      delete data[field];
+    }
 
     for (const field of fieldsNotToCompare) {
       delete data[field];
@@ -111,11 +119,11 @@ export default function FormUpdateProfile({
         email: data.email ? data.email : userData.email,
         phone: data.phone ? data.phone : userData.phone,
         parentPhone: data.parentPhone ? data.parentPhone : userData.parentPhone,
-        region: data.region ? data.region : userData.region,
-        governorate: data.governorate ? data.governorate : userData.governorate,
-        year: data.year ? data.year : userData.year,
-        englishExam: data.englishExam ? data.englishExam : userData.englishExam,
         context: data.context ? data.context : userData.context,
+        regionId: data.regionId ? data.regionId : userData.regionId,
+        governorateId: data.governorateId ? data.governorateId : userData.governorateId,
+        yearId: data.yearId ? data.yearId : userData.yearId,
+        subjectId: data.subjectId ? data.subjectId : userData.subjectId,
         bio: data.bio ? data.bio : userData.bio,
         specialty: data.specialty ? data.specialty : userData.specialty
       })
@@ -145,15 +153,15 @@ export default function FormUpdateProfile({
           )}
         </div>
         <div className="flex flex-row gap-3 pb-2">
-          <FormField form={form} name="region" disabled />
-          <FormField form={form} name="governorate" disabled />
+          <FormField form={form} name="regionId" type="hidden" disabled label='Region' />
+          <FormField form={form} name="governorateId" type="hidden" disabled label="Governorate" />
         </div>
         <div className="flex flex-row gap-3 pb-2">
           {user.context == 'school' && (
-            <FormField form={form} name="year" disabled />
+            <FormField form={form} name="yearId" type="hidden" disabled label="Year" />
           )}
           {user.context == 'englishExam' && (
-            <FormField form={form} name="englishExam" disabled />
+            <FormField form={form} name="subjectId" type="hidden" disabled label="Subject" />
           )}
         </div>
         <div className="flex flex-row gap-3 pb-2">

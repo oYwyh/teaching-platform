@@ -14,14 +14,14 @@ import { baseColumns, BaseColumnsTypes, SelectTableColumn, ExportTableColumn } f
 import Actions from "@/app/dashboard/_components/Actions"
 import { getGovernorateArabicName } from "@/lib/funcs"
 import RemoveDialog from "@/app/dashboard/_components/RemoveDialog"
-import { studentContexts } from "@/constants/index.constant"
+import { studentContexts, subjectContexts } from "@/constants/index.constant"
 import { ScrollArea } from "@radix-ui/react-scroll-area"
 import { TCourse, TInstructor, TRegion, TStudent, TSubject, TUser } from "@/types/index.type"
 
-const studentsColumns = baseColumns.concat('parentPhone', 'englishExam', 'year', 'table')
+const studentsColumns = baseColumns.concat('parentPhone', 'subject', 'subjectId', 'year', 'yearId', 'context', 'table')
 const instructorColumns = baseColumns.concat('bio', 'specialty', 'table')
 const regionsColumns = ['id', 'region', 'governorates', 'years', 'table']
-const subjectsColumns = ['ids', 'subject', 'regions', 'context', 'table']
+const subjectsColumns = ['ids', 'subject', 'regions', 'table']
 const coursesColumns = [
     'id',
     'title',
@@ -43,7 +43,7 @@ const coursesColumns = [
     'table'
 ]
 
-const StudentsActionsTableColumn = [
+const ActionsTableColumn = [
     {
         id: "actions",
         accessorKey: "actions",
@@ -52,101 +52,24 @@ const StudentsActionsTableColumn = [
                 <p>Actions </p>
             )
         },
-        cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = studentsColumns.reduce((acc: { [key: string]: TUser & TStudent }, column: string) => {
+        cell: ({ row }: { row: Row<any> }) => {
+
+            const tablesMap = {
+                user: baseColumns,
+                student: studentsColumns,
+                instructor: instructorColumns,
+                region: regionsColumns,
+                subject: subjectsColumns,
+                course: coursesColumns
+            };
+
+            const table: keyof typeof tablesMap = row.getValue('table')
+
+            const rowData = tablesMap[table].reduce((acc: { [key: string]: TUser & TStudent }, column: string) => {
                 acc[column] = row.getValue(column);
-                // add type column as well
-                acc['context'] = row.getValue('context')
-                acc['table'] = 'user'
                 return acc;
             }, {});
 
-            return (
-                <Actions row={row} rowData={rowData} />
-            )
-        },
-    },
-]
-const InstructorActionsTableColumn = [
-    {
-        id: "actions",
-        accessorKey: "actions",
-        header: () => {
-            return (
-                <p>Actions </p>
-            )
-        },
-        cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = instructorColumns.reduce((acc: { [key: string]: TInstructor }, column: string) => {
-                acc[column] = row.getValue(column);
-                // add type column as well
-                acc['table'] = 'instructor'
-                return acc;
-            }, {});
-
-            return (
-                <Actions row={row} rowData={rowData} />
-            )
-        },
-    },
-]
-const RegionsActionTableColumn = [
-    {
-        id: "actions",
-        accessorKey: "actions",
-        header: () => {
-            return (
-                <p>Actions </p>
-            )
-        },
-        cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = regionsColumns.reduce((acc: { [key: string]: TRegion }, column: string) => {
-                acc[column] = row.getValue(column);
-                acc['table'] = 'region'
-                return acc;
-            }, {});
-            return (
-                <Actions row={row} rowData={rowData} />
-            )
-        },
-    },
-]
-const SubjectsActionTableColumn = [
-    {
-        id: "actions",
-        accessorKey: "actions",
-        header: () => {
-            return (
-                <p>Actions </p>
-            )
-        },
-        cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = subjectsColumns.reduce((acc: { [key: string]: TSubject }, column: string) => {
-                acc[column] = row.getValue(column);
-                acc['table'] = 'subject'
-                return acc;
-            }, {});
-            return (
-                <Actions row={row} rowData={rowData} />
-            )
-        },
-    },
-]
-const CoursesActionTableColumn = [
-    {
-        id: "actions",
-        accessorKey: "actions",
-        header: () => {
-            return (
-                <p>Actions </p>
-            )
-        },
-        cell: ({ row, table }: { row: Row<any>, table: Table<any> }) => {
-            const rowData = coursesColumns.reduce((acc: { [key: string]: TCourse }, column: string) => {
-                acc[column] = row.getValue(column);
-                acc['table'] = 'course'
-                return acc;
-            }, {});
             return (
                 <Actions row={row} rowData={rowData} />
             )
@@ -165,7 +88,7 @@ export const StudentsTableColumns: ColumnDef<TUser & TStudent>[] = [
         },
         cell: ({ cell, row }: { cell: Cell<any, any>, row: Row<any> }) => {
             const value = cell.getValue();
-            const formattedValue = value ? value.replace('_', ' ') : '';
+            const formattedValue = value;
 
             return (
                 <>
@@ -190,10 +113,7 @@ export const StudentsTableColumns: ColumnDef<TUser & TStudent>[] = [
                     {cell.column.id == 'englishExam' && row.getValue('context') == 'englishExam' && (
                         <p>{formattedValue}</p>
                     )}
-                    {cell.column.id == 'table' && (
-                        <>user</>
-                    )}
-                    {cell.column.id != 'governorate' && cell.column.id != 'year' && cell.column.id != 'parentPhone' && cell.column.id != 'englishExam' && cell.column.id != 'table' && (
+                    {cell.column.id != 'governorate' && cell.column.id != 'year' && cell.column.id != 'parentPhone' && cell.column.id != 'englishExam' && (
                         <p>{value}</p>
                     )}
                 </>
@@ -224,7 +144,7 @@ export const StudentsTableColumns: ColumnDef<TUser & TStudent>[] = [
             return value.includes(row.getValue(id))
         },
     },
-    ...StudentsActionsTableColumn,
+    ...ActionsTableColumn,
     ...ExportTableColumn
 ];
 
@@ -263,10 +183,9 @@ export const InstructorTableColumns: ColumnDef<TInstructor>[] = [
             )
         }
     })),
-    ...InstructorActionsTableColumn,
+    ...ActionsTableColumn,
     ...ExportTableColumn
 ];
-
 
 export const RegionsTableColumns: ColumnDef<TRegion>[] = [
     ...SelectTableColumn,
@@ -316,7 +235,7 @@ export const RegionsTableColumns: ColumnDef<TRegion>[] = [
             )
         }
     })),
-    ...RegionsActionTableColumn,
+    ...ActionsTableColumn,
     ...ExportTableColumn
 ]
 
@@ -354,7 +273,31 @@ export const SubjectsTableColumns: ColumnDef<TSubject>[] = [
             )
         }
     })),
-    ...SubjectsActionTableColumn,
+    {
+        accessorKey: "context",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Context" />
+        ),
+        cell: ({ row }) => {
+            const context = subjectContexts.find(
+                (context) => context.value === row.getValue("context")
+            )
+
+            if (!context) {
+                return null
+            }
+
+            return (
+                <div className="flex w-[100px] items-center">
+                    <span>{context.labelEn}</span>
+                </div>
+            )
+        },
+        filterFn: (row, id, value) => {
+            return value.includes(row.getValue(id))
+        },
+    },
+    ...ActionsTableColumn,
     ...ExportTableColumn
 ]
 
@@ -385,6 +328,6 @@ export const CoursesTableColumns: ColumnDef<TCourse>[] = [
             )
         }
     })),
-    ...CoursesActionTableColumn,
+    ...ActionsTableColumn,
     ...ExportTableColumn
 ]

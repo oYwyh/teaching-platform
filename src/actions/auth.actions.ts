@@ -62,7 +62,7 @@ export const check = async (data: TCheckSchema) => {
 }
 
 export const register = async (data: TRegisterSchema) => {
-    const { firstname, lastname, email, phone, parentPhone, region, governorate, englishExam, context, year, password } = data
+    const { firstname, lastname, email, phone, parentPhone, regionId, governorateId, subjectId, context, yearId, password } = data
 
     const unqiueValidation = await uniqueColumnsValidations({ email, phone, parentPhone })
 
@@ -88,15 +88,15 @@ export const register = async (data: TRegisterSchema) => {
         lastname,
         email,
         phone,
-        region,
-        governorate,
+        regionId,
+        governorateId,
         password: passwordHash,
     });
 
     await db.insert(studentTable).values({
         parentPhone,
-        year,
-        englishExam,
+        yearId,
+        subjectId,
         context,
         userId: userId
     })

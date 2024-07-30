@@ -53,10 +53,10 @@ async function getData() {
     const regionsWithGovernoratesAndYears = Object.values(structuredData).map(item => ({
         ...item.region,
         governorates: Array.from(item.governorates.values()), // Convert Map values to Array
-        years: Array.from(item.years.values()) // Convert Map values to Array
+        years: Array.from(item.years.values()), // Convert Map values to Array
+        table: 'region',
     }));
 
-    console.log(regionsWithGovernoratesAndYears);
 
     return regionsWithGovernoratesAndYears;
 }

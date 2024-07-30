@@ -64,13 +64,13 @@ interface MultiSelectProps
      */
     options: {
         /** The text to display for the option. */
-        label?: string;
-        /** The text to display for the option. */
         labelAr: string;
         /** The text to display for the option. */
         labelEn: string;
         /** The unique value associated with the option. */
         value: string;
+        /** The text to display for the option. */
+        label?: string;
         /** Optional icon component to display alongside the option. */
         icon?: React.ComponentType<{ className?: string | undefined; }> | undefined;
     }[];

@@ -20,7 +20,7 @@ import FormField from "@/components/ui/formField";
 import { Form, FormMessage } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getSubjects, getGovernorates, getRegions, getYears } from "@/actions/index.actions";
-import { StudentContexts } from "@/types/index.type";
+import { StudentContexts, TIndex, TOptions } from "@/types/index.type";
 
 export default function Edit({ id, rowData, setPopOpen }: {
     id: string,
@@ -30,11 +30,11 @@ export default function Edit({ id, rowData, setPopOpen }: {
     const [open, setOpen] = useState(false);
     const [studentContext, setStudentContext] = useState<StudentContexts>(rowData.context);
     const [selectedRegion, setSelectedRegion] = useState<string | undefined>(rowData.region ? rowData.region : '');
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>();
-    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
-    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
+    const [regions, setRegions] = useState<TOptions>();
+    const [governorates, setGovernorates] = useState<TIndex<TOptions>>();
+    const [years, setYears] = useState<TIndex<TOptions>>();
+    const [englishExams, setEnglishExams] = useState<TOptions>([]);
     const [error, setError] = useState<string | undefined>();
-    const [englishExams, setEnglishExams] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
 
     useEffect(() => {
         const fetchRegions = async () => {
@@ -68,13 +68,13 @@ export default function Edit({ id, rowData, setPopOpen }: {
             email: rowData?.email || "",
             phone: rowData?.phone || "",
             parentPhone: rowData?.parentPhone || '',
-            region: (rowData?.region) || "",
-            governorate: (rowData?.governorate) || "",
-            year: (rowData?.year) || '',
-            englishExam: (rowData?.englishExam) || '',
+            regionId: rowData?.regionId ? parseInt(rowData.regionId) : 0,
+            governorateId: rowData?.governorateId ? parseInt(rowData.governorateId) : 0,
+            yearId: rowData?.yearId ? parseInt(rowData.yearId) : 0,
+            subjectId: rowData?.subjectId ? parseInt(rowData.subjectId) : 0,
             context: rowData?.context || "",
         }
-    })
+    });
 
     const passwordForm = useForm<TPasswordSchema>({
         resolver: zodResolver(passwordSchema),
@@ -124,6 +124,7 @@ export default function Edit({ id, rowData, setPopOpen }: {
         }
     }
 
+
     return (
         <div>
             <Dialog open={open} onOpenChange={setOpen}>
@@ -163,19 +164,19 @@ export default function Edit({ id, rowData, setPopOpen }: {
                                                     )}
                                                 </div>
                                                 <div className="flex flex-row gap-3 item-center">
-                                                    <FormField form={accountForm} name='region' select='region' regions={regions} setState={setSelectedRegion} />
+                                                    <FormField form={accountForm} name='regionId' select='region' regions={regions} setState={setSelectedRegion} label='Region' />
                                                     {selectedRegion && (
-                                                        <FormField form={accountForm} name='governorate' select='governorate' governorates={governorates} region={selectedRegion} />
+                                                        <FormField form={accountForm} name='governorateId' select='governorate' governorates={governorates} region={selectedRegion} label='Governorate' />
                                                     )}
                                                 </div>
                                                 <div className="flex flex-row gap-3 item-center">
                                                     {selectedRegion && (
                                                         <>
                                                             {studentContext == 'school' && (
-                                                                <FormField form={accountForm} name='year' select='year' years={years} region={selectedRegion} />
+                                                                <FormField form={accountForm} name='yearId' select='year' years={years} region={selectedRegion} label='Year' />
                                                             )}
                                                             {studentContext == 'englishExam' && (
-                                                                <FormField form={accountForm} name='englishExam' select='englishExam' englishExams={englishExams} />
+                                                                <FormField form={accountForm} name='subjectId' select='englishExam' subjects={englishExams} label="English Exam" />
                                                             )}
                                                         </>
                                                     )}

@@ -12,8 +12,8 @@ export type TUser = {
     firstname: string;
     lastname: string;
     email: string;
-    region: string;
-    governorate: string;
+    regionId: number;
+    governorateId: number;
     phone: string;
     picture: string;
     role: UserRoles;
@@ -21,8 +21,8 @@ export type TUser = {
 
 export type TStudent = {
     parentPhone: string | null;
-    year: string | null;
-    englishExam: string | null;
+    yearId: number | null;
+    subjectId: number | null;
     context: StudentContexts;
 }
 
@@ -37,12 +37,12 @@ export type TFullUserData = {
     lastname: string;
     email: string;
     phone: string;
-    region: string;
-    governorate: string;
+    regionId: number;
+    governorateId: number;
     picture: string;
     role: UserRoles;
-    englishExam?: string;
-    year?: string;
+    subjectId?: number;
+    yearId?: number;
     parentPhone?: string;
     context?: StudentContexts;
     bio?: string;

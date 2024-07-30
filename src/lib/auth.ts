@@ -26,8 +26,8 @@ export const lucia = new Lucia(adapter, {
             lastname: attributes.lastname,
             email: attributes.email,
             phone: attributes.phone,
-            region: attributes.region,
-            governorate: attributes.governorate,
+            regionId: attributes.regionId,
+            governorateId: attributes.governorateId,
             picture: attributes.picture,
             role: attributes.role,
         };

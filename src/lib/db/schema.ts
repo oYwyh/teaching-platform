@@ -24,8 +24,8 @@ export const userTable = pgTable("user", {
     lastname: text("lastname").notNull(),
     email: text("email").unique().notNull(),
     phone: text("phone").unique().notNull(),
-    region: text("region").notNull(),
-    governorate: text("governorate").notNull(),
+    regionId: integer("regionId").references(() => regionTable.id, { onDelete: 'no action' }).notNull(),
+    governorateId: integer("governorateId").references(() => governorateTable.id, { onDelete: 'no action' }).notNull(),
     password: text("password").notNull(),
     picture: text("picture").default('default.jpg').notNull(),
     ...timestamps(),
@@ -48,9 +48,9 @@ export const studentTable = pgTable("student", {
     userId: text("userId")
         .notNull()
         .references(() => userTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
-    year: text("year"),
-    englishExam: text("englishExam"),
     parentPhone: text("parentPhone").unique(),
+    subjectId: integer("subjectId").references(() => subjectTable.id),
+    yearId: integer("yearId").references(() => yearTable.id),
     context: StudentContexts("context").notNull(),
     ...timestamps(),
 });
@@ -93,8 +93,6 @@ export const subjectTable = pgTable("subject", {
     regionId: integer('regionId').references(() => regionTable.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     ...timestamps(),
 });
-
-
 
 export const CourseContexts = pgEnum("courseContexts", ["school", "englishExam"]);
 export const CourseStatus = pgEnum("courseStatus", ["published", "unpublished", 'scheduled']);

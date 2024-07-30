@@ -21,6 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { error } from "console";
+import { TOptions } from "@/types/index.type";
 
 export default function Edit({
     ids,
@@ -31,11 +32,10 @@ export default function Edit({
     rowData: { [key: string]: string } & TEditSchema & { regions: any[] },
     setPopOpen: Dispatch<SetStateAction<boolean | undefined>>
 }) {
-
     const [open, setOpen] = useState(false)
     const [subjectContext, setSubjectContext] = useState<string>(rowData.subjectContext)
-    const [selectedRegions, setSelectedRegions] = useState<string[]>(rowData.regions.map((item: any) => item.region));
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
+    const [selectedRegions, setSelectedRegions] = useState<string[]>(rowData.regions.map((item: any) => item.id));
+    const [regions, setRegions] = useState<TOptions>([]);
 
     useEffect(() => {
         const fetchRegions = async () => {

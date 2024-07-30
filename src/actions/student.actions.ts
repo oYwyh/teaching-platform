@@ -14,7 +14,7 @@ import { revalidatePath } from "next/cache";
 export async function add(
     data: TAddSchema,
 ) {
-    const { firstname, lastname, email, phone, parentPhone, region, governorate, englishExam, context, year, password } = data
+    const { firstname, lastname, email, phone, parentPhone, regionId, governorateId, subjectId, context, yearId, password } = data
 
     const unqiueValidation = await uniqueColumnsValidations(data)
 
@@ -39,15 +39,15 @@ export async function add(
         lastname,
         email,
         phone,
-        region,
-        governorate,
+        regionId,
+        governorateId,
         password: passwordHash,
     });
 
     await db.insert(studentTable).values({
         parentPhone,
-        year,
-        englishExam,
+        yearId,
+        subjectId,
         context,
         userId: userId
     })
@@ -62,7 +62,7 @@ export async function add(
 }
 
 export async function edit(data: TEditSchema, userId: string) {
-    const { firstname, lastname, email, phone, parentPhone, region, governorate, context, englishExam, year } = data;
+    const { firstname, lastname, email, phone, parentPhone, regionId, governorateId, context, subjectId, yearId } = data;
 
     const uniqueValidation = await uniqueColumnsValidations(data, userId);
 
@@ -78,8 +78,8 @@ export async function edit(data: TEditSchema, userId: string) {
     if (lastname !== undefined && lastname !== null) userUpdateData.lastname = lastname;
     if (email !== undefined && email !== null) userUpdateData.email = email;
     if (phone !== undefined && phone !== null) userUpdateData.phone = phone;
-    if (region !== undefined && region !== null) userUpdateData.region = region;
-    if (governorate !== undefined && governorate !== null) userUpdateData.governorate = governorate;
+    if (regionId !== undefined && regionId !== null) userUpdateData.regionId = regionId;
+    if (governorateId !== undefined && governorateId !== null) userUpdateData.governorateId = governorateId;
 
     if (Object.keys(userUpdateData).length > 0) {
         await db.update(userTable).set(userUpdateData).where(sql`${userTable.id} = ${userId}`).returning();
@@ -89,12 +89,12 @@ export async function edit(data: TEditSchema, userId: string) {
     const studentUpdateData: Partial<TStudent> = {};
     if (context === 'englishExam') {
         studentUpdateData.parentPhone = null;
-        studentUpdateData.year = null;
-        if (englishExam !== undefined && englishExam !== null) studentUpdateData.englishExam = englishExam;
+        studentUpdateData.yearId = null;
+        if (subjectId !== undefined && subjectId !== null) studentUpdateData.subjectId = subjectId;
     } else if (context === 'school') {
-        studentUpdateData.englishExam = null;
+        studentUpdateData.subjectId = null;
         if (parentPhone !== undefined && parentPhone !== null) studentUpdateData.parentPhone = parentPhone;
-        if (year !== undefined && year !== null) studentUpdateData.year = year;
+        if (yearId !== undefined && yearId !== null) studentUpdateData.yearId = yearId;
     }
     if (context !== undefined && context !== null) studentUpdateData.context = context;
 

@@ -16,7 +16,7 @@ import { Form } from "@/components/ui/form";
 import FormField from "@/components/ui/formField";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { addSchema, TAddSchema } from "@/schemas/student.schema";
-import { StudentContexts } from "@/types/index.type";
+import { StudentContexts, TIndex, TOptions } from "@/types/index.type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -26,10 +26,10 @@ export default function Add() {
 
     const [studentContext, setStudentContext] = useState<StudentContexts>();
     const [selectedRegion, setSelectedRegion] = useState<string | undefined>();
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>();
-    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
-    const [years, setYears] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>();
-    const [englishExams, setEnglishExams] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
+    const [regions, setRegions] = useState<TOptions>();
+    const [governorates, setGovernorates] = useState<TIndex<TOptions>>();
+    const [years, setYears] = useState<TIndex<TOptions>>();
+    const [englishExams, setEnglishExams] = useState<TOptions>([]);
 
     useEffect(() => {
         const fetchRegions = async () => {
@@ -49,8 +49,8 @@ export default function Add() {
 
     useEffect(() => {
         if (selectedRegion) {
-            form.resetField('governorate');
-            form.resetField('year');
+            form.resetField('governorateId');
+            form.resetField('yearId');
         }
     }, [selectedRegion])
 
@@ -60,19 +60,8 @@ export default function Add() {
 
     const onSubmit = async (data: { [key: string]: string | number } & TAddSchema) => {
 
-        if (studentContext === 'school') {
-            if (!data.year) {
-                form.setError('year', { type: 'server', message: 'Year is required' });
-                return;
-            }
-            if (!data.parentPhone) {
-                form.setError('parentPhone', { type: 'server', message: 'Parent Phone is required' });
-                return;
-            }
-        }
-
         Object.entries(data).forEach(([key, value]) => {
-            if (typeof value === 'string') {
+            if (typeof value === 'string' && key !== 'context') {
                 data[key] = value.toLowerCase();
             }
         });
@@ -120,19 +109,19 @@ export default function Add() {
                                             )}
                                         </div>
                                         <div className="flex flex-row gap-3 item-center">
-                                            <FormField form={form} name='region' select='region' regions={regions} setState={setSelectedRegion} />
+                                            <FormField form={form} name='regionId' select='region' regions={regions} setState={setSelectedRegion} label='Region' />
                                             {selectedRegion && (
-                                                <FormField form={form} name='governorate' select='governorate' governorates={governorates} region={selectedRegion} />
+                                                <FormField form={form} name='governorateId' select='governorate' governorates={governorates} region={selectedRegion} label='Governorate' />
                                             )}
                                         </div>
                                         <div className="flex flex-row gap-3 item-center">
                                             {selectedRegion && (
                                                 <>
                                                     {studentContext == 'school' && (
-                                                        <FormField form={form} name='year' select='year' years={years} region={selectedRegion} />
+                                                        <FormField form={form} name='yearId' select='year' years={years} region={selectedRegion} label='Year' />
                                                     )}
                                                     {studentContext == 'englishExam' && (
-                                                        <FormField form={form} name='englishExam' select='englishExam' englishExams={englishExams} />
+                                                        <FormField form={form} name='subjectId' select='englishExam' subjects={englishExams} region={selectedRegion} label='Subject' />
                                                     )}
                                                 </>
                                             )}

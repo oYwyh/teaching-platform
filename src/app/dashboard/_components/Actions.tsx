@@ -26,7 +26,7 @@ export default function Actions({ row, rowData }: { row: Row<any>, rowData: any 
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel >Actions</DropdownMenuLabel>
                 <div className="flex flex-col gap-2 w-full">
-                    {rowData.table == 'user' && (
+                    {rowData.table == 'student' && (
                         <>
                             <EditStudent
                                 id={row.getValue('id')}
@@ -49,7 +49,7 @@ export default function Actions({ row, rowData }: { row: Row<any>, rowData: any 
                             />
                             <Delete
                                 id={row.getValue('id')}
-                                table="instructor"
+                                table={'user'}
                                 setPopOpen={setOpen}
                             />
                         </>
@@ -63,7 +63,7 @@ export default function Actions({ row, rowData }: { row: Row<any>, rowData: any 
                             />
                             <Delete
                                 id={row.getValue('id')}
-                                table="region"
+                                table={rowData.table}
                                 setPopOpen={setOpen}
                             />
                         </>
@@ -79,7 +79,7 @@ export default function Actions({ row, rowData }: { row: Row<any>, rowData: any 
                             )}
                             <Delete
                                 id={row.getValue('ids')}
-                                table="subject"
+                                table={rowData.table}
                                 setPopOpen={setOpen}
                             />
                         </>

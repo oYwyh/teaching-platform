@@ -21,20 +21,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { error } from "console";
+import { TOptions } from "@/types/index.type";
 
 export default function Add({ existingSubjects }: { existingSubjects: string[] }) {
     const [open, setOpen] = useState(false)
-    const [subjectsArray, setSubjectsArray] = useState<{ labelAr: string, labelEn: string, value: string }[]>([
+    const [subjectsArray, setSubjectsArray] = useState<TOptions>([
         ...subjects.englishExam,
         ...subjects.school,
     ])
     const [subjectContext, setSubjectContext] = useState<string>()
     const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>([]);
-
-    useEffect(() => {
-        console.log(subjectContext)
-    }, [subjectContext])
+    const [regions, setRegions] = useState<TOptions>([]);
 
     useEffect(() => {
         const fetchRegions = async () => {
@@ -46,17 +43,12 @@ export default function Add({ existingSubjects }: { existingSubjects: string[] }
         fetchRegions();
     }, []);
 
-
     useEffect(() => {
         if (subjectContext) {
             form.resetField('subject')
             setSelectedRegions([])
         }
     }, [subjectContext])
-
-    useEffect(() => {
-        console.log(selectedRegions)
-    }, [selectedRegions])
 
     const form = useForm<TAddSchema>({
         resolver: zodResolver(addSchema),
@@ -67,6 +59,7 @@ export default function Add({ existingSubjects }: { existingSubjects: string[] }
             form.setError('regions', { type: 'server', message: 'One region at least is required!' })
             return;
         }
+
         await add(data, selectedRegions);
 
         form.reset()

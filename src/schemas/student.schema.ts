@@ -7,10 +7,10 @@ export const addSchema = z.object({
     email: z.string().email(),
     phone: z.string().min(1, "Phone is required"),
     parentPhone: z.string().optional(),
-    year: z.string().optional(),
-    region: z.string(),
-    governorate: z.string(),
-    englishExam: z.string().optional(),
+    yearId: z.number().optional(),
+    regionId: z.number(),
+    governorateId: z.number(),
+    subjectId: z.number().optional(),
     context: z.enum(studentContexts),
     password: z.string(),
     confirmPassword: z.string()
@@ -21,11 +21,11 @@ export const addSchema = z.object({
     message: "Personal phone and parent phone cannot be the same",
     path: ['phone']
 }).superRefine((data, ctx) => {
-    if (data.context === 'school' && !data.year) {
+    if (data.context === 'school' && !data.yearId) {
         ctx.addIssue({
             code: "custom",
             message: "Year is required",
-            path: ["year"],
+            path: ["yearId"],
         });
     }
     if (data.context === 'school' && !data.parentPhone) {
@@ -35,11 +35,11 @@ export const addSchema = z.object({
             path: ["parentPhone"],
         });
     }
-    if (data.context === 'englishExam' && !data.englishExam) {
+    if (data.context === 'englishExam' && !data.subjectId) {
         ctx.addIssue({
             code: "custom",
             message: "Exam is required",
-            path: ["englishExam"],
+            path: ["subjectId"],
         });
     }
 })
@@ -52,20 +52,20 @@ export const editSchema = z.object({
     email: z.string().email(),
     phone: z.string().min(1, "Phone is required"),
     parentPhone: z.string().optional(),
-    year: z.string().optional(),
-    region: z.string(),
-    governorate: z.string(),
-    englishExam: z.string().optional(),
+    yearId: z.number().optional(),
+    regionId: z.number(),
+    governorateId: z.number(),
+    subjectId: z.number().optional(),
     context: z.enum(studentContexts),
 }).refine((data) => data.parentPhone != data.phone, {
     message: "Personal phone and parent phone cannot be the same",
     path: ['phone']
 }).superRefine((data, ctx) => {
-    if (data.context == 'school' && !data.year) {
+    if (data.context == 'school' && !data.yearId) {
         ctx.addIssue({
             code: "custom",
             message: "Year is required",
-            path: ["year"],
+            path: ["yearId"],
         });
     }
     if (data.context == 'school' && !data.parentPhone) {
@@ -75,11 +75,11 @@ export const editSchema = z.object({
             path: ["parentPhone"],
         });
     }
-    if (data.context == 'englishExam' && !data.englishExam) {
+    if (data.context == 'englishExam' && !data.subjectId) {
         ctx.addIssue({
             code: "custom",
             message: "Exam is required",
-            path: ["englishExam"],
+            path: ["subjectId"],
         });
     }
 })

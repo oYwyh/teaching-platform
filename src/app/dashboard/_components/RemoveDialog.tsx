@@ -32,10 +32,12 @@ interface RegionDialogProps {
     regions?: { id: number, region: string, subjectId: number }[]
 }
 
+
 export default function RemoveDialog({ array, region, name, regions }: RegionDialogProps) {
     const [dialogOpen, setDialogOpen] = useState<boolean | undefined>()
     const [alertOpen, setAlertOpen] = useState<boolean | undefined>()
     const [error, setError] = useState<string>('')
+    const [subjectId, setSubjectId] = useState<number>(0)
 
     const gradeOrder = [
         "first_grade", "second_grade", "third_grade", "fourth_grade", "fifth_grade",
@@ -62,9 +64,10 @@ export default function RemoveDialog({ array, region, name, regions }: RegionDia
         setAlertOpen(false)
         setDialogOpen(false)
     }
+
     return (
         <>
-            <Dialog open={dialogOpen} setOpen={setDialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <div className="flex flex-row items-center gap-2">
                     <DialogTrigger className="p-2 shadow-md border-black rounded-md transition-all ease-in-out hover:shadow-lg">View</DialogTrigger>
                 </div>
@@ -76,17 +79,18 @@ export default function RemoveDialog({ array, region, name, regions }: RegionDia
                         </DialogTitle>
                     </DialogHeader>
                     <Separator />
-                    {regions && regions.length > 0 ? (
+                    {regions ? (
                         <ScrollArea className="max-h-[300px] w-full rounded-md border p-4">
                             <div className="flex flex-col gap-2">
                                 {regions.map((region) => (
                                     <div key={region.id} className="flex flex-row items-center justify-between">
                                         <p className="capitalize">{region.region.replace('_', ' ')}</p>
-                                        <AlertDialog open={alertOpen} setOpen={setAlertOpen} onOpenChange={setAlertOpen}>
+                                        <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
                                             <AlertDialogTrigger asChild>
                                                 <Trash2
                                                     className="w-fit h-fit px-1 py-1 cursor-pointer transition-all ease-in-out rounded-sm hover:shadow-md"
                                                     color="red"
+                                                    onClick={() => setSubjectId(region.subjectId)}
                                                 />
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
@@ -101,7 +105,7 @@ export default function RemoveDialog({ array, region, name, regions }: RegionDia
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                     <Button
                                                         variant='destructive'
-                                                        onClick={() => handleDelete(region.subjectId, 'subject')}
+                                                        onClick={(e) => handleDelete(subjectId, 'subject')}
                                                     >
                                                         Remove
                                                     </Button>
@@ -112,48 +116,50 @@ export default function RemoveDialog({ array, region, name, regions }: RegionDia
                                 ))}
                             </div>
                         </ScrollArea>
-                    ) : sortedArray.length > 0 ? (
-                        <ScrollArea className="max-h-[300px] w-full rounded-md border p-4">
-                            <div className="flex flex-col gap-2">
-                                {sortedArray.map((value) => (
-                                    <div key={value.id} className="flex flex-row items-center justify-between">
-                                        <p className="capitalize">{name === 'governorate' ? value.governorate?.replace('_', ' ') : value.year?.replace('_', ' ')}</p>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Trash2
-                                                    className="w-fit h-fit px-1 py-1 cursor-pointer transition-all ease-in-out rounded-sm hover:shadow-md"
-                                                    color="red"
-                                                />
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This action cannot be undone. This will permanently delete your account
-                                                        and remove your data from our servers.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <Button
-                                                        variant='destructive'
-                                                        onClick={() => handleDelete(value.id, name)}
-                                                    >
-                                                        Remove
-                                                    </Button>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </div>
-                                ))}
-                            </div>
-                        </ScrollArea>
+                    ) : sortedArray.length > 0 && name ? (
+                        <>
+                            < ScrollArea className="max-h-[300px] w-full rounded-md border p-4">
+                                <div className="flex flex-col gap-2">
+                                    {sortedArray.map((value) => (
+                                        <div key={value.id} className="flex flex-row items-center justify-between">
+                                            <p className="capitalize">{name === 'governorate' ? value.governorate?.replace('_', ' ') : value.year?.replace('_', ' ')}</p>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Trash2
+                                                        className="w-fit h-fit px-1 py-1 cursor-pointer transition-all ease-in-out rounded-sm hover:shadow-md"
+                                                        color="red"
+                                                    />
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete your account
+                                                            and remove your data from our servers.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <Button
+                                                            variant='destructive'
+                                                            onClick={() => handleDelete(value.id, name)}
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        </>
                     ) : (
                         <p>No {name || 'regions'} found</p>
                     )}
                     {error && <p className="text-red-500">{error}</p>}
                 </DialogContent>
-            </Dialog>
+            </Dialog >
         </>
     )
 }

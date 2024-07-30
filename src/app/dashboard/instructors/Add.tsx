@@ -1,6 +1,6 @@
 'use client'
 
-import { getExams, getGovernorates, getRegions, getYears } from "@/actions/index.actions";
+import { getById, getGovernorates, getRegions, getYears } from "@/actions/index.actions";
 import { add } from "@/actions/instructor.actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import { Form } from "@/components/ui/form";
 import FormField from "@/components/ui/formField";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { addSchema, TAddSchema } from "@/schemas/instructor.schema";
+import { TIndex, TOptions } from "@/types/index.type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -23,9 +24,10 @@ import { useForm } from "react-hook-form";
 export default function Add() {
     const [open, setOpen] = useState(false)
 
-    const [selectedRegion, setSelectedRegion] = useState<string | undefined>();
-    const [regions, setRegions] = useState<{ labelAr: string; labelEn: string; value: string; }[]>({});
-    const [governorates, setGovernorates] = useState<{ [key: string]: { labelAr: string; labelEn: string; value: string; }[] }>({});
+    const [selectedRegionId, setSelectedRegionId] = useState<number>();
+    const [selectedRegion, setSelectedRegion] = useState<string>();
+    const [regions, setRegions] = useState<TOptions>();
+    const [governorates, setGovernorates] = useState<TIndex<TOptions>>();
 
     useEffect(() => {
         const fetchRegions = async () => {
@@ -40,10 +42,14 @@ export default function Add() {
     }, []);
 
     useEffect(() => {
-        if (selectedRegion) {
-            form.resetField('governorate');
+        async function fetchRegion() {
+            if (selectedRegionId) {
+                const region = await getById(selectedRegionId, 'region', true)
+                setSelectedRegion(region)
+                fetchRegion()
+            }
         }
-    }, [selectedRegion])
+    }, [selectedRegionId])
 
     const form = useForm<TAddSchema>({
         resolver: zodResolver(addSchema),
@@ -90,9 +96,9 @@ export default function Add() {
                                     <FormField form={form} name="phone" />
                                 </div>
                                 <div className="flex flex-row gap-3 item-center">
-                                    <FormField form={form} name='region' select='region' regions={regions} setState={setSelectedRegion} />
+                                    <FormField form={form} name='regionId' select='region' label="Region" regions={regions} setState={setSelectedRegionId} />
                                     {selectedRegion && (
-                                        <FormField form={form} name='governorate' select='governorate' governorates={governorates} region={selectedRegion} />
+                                        <FormField form={form} name='governorateId' label="Governorate" select='governorate' governorates={governorates} region={selectedRegion} />
                                     )}
                                 </div>
                                 <div className="flex flex-row gap-3 item-center">

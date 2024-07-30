@@ -5,6 +5,7 @@ import { InstructorTableColumns, StudentsTableColumns } from "@/app/dashboard/_c
 import Add from "@/app/dashboard/instructors/Add";
 import { instructorTable, roleTable, userTable } from "@/lib/db/schema";
 import { and, eq, sql } from "drizzle-orm";
+import { getById } from "@/actions/index.actions";
 
 async function getData() {
     const joinedData = await db.select()
@@ -13,11 +14,20 @@ async function getData() {
         .leftJoin(instructorTable, eq(instructorTable.userId, userTable.id))
         .where(eq(roleTable.role, 'instructor'));
 
-    const users = joinedData.map(item => ({
-        ...item.user,
+    const users = Promise.all(joinedData.map(async (item) => ({
+        id: item.user.id,
+        firstname: item.user.firstname,
+        lastname: item.user.lastname,
+        email: item.user.email,
+        phone: item.user.phone,
+        region: await getById(item.user.regionId, 'region', true),
+        regionId: item.user.regionId,
+        governorate: await getById(item.user.governorateId, 'governorate', true),
+        governorateId: item.user.governorateId,
         bio: item.instructor?.bio,
         specialty: item.instructor?.specialty,
-    }));
+        table: 'instructor'
+    })));
 
     return users;
 }
@@ -33,8 +43,8 @@ export default async function StudentsPage() {
             <DataTable
                 columns={InstructorTableColumns}
                 data={data}
-                hiddenColumns={['id', 'table']}
-                restrictedColumns={['table']}
+                hiddenColumns={['id', 'table', 'governorateId', 'regionId']}
+                restrictedColumns={['table', 'governorateId', 'regionId']}
             />
         </div>
     )

@@ -17,8 +17,8 @@ export async function add(
     if (data.subjectContext == 'school') {
         const regionsInDb = await db.query.regionTable.findMany({});
 
-        const selectedRegionObjects = selectedRegions.map(regionName => {
-            const region = regionsInDb.find(r => r.region === regionName);
+        const selectedRegionObjects = selectedRegions.map(regionId => {
+            const region = regionsInDb.find(r => r.id === regionId)
             return region ? { id: region.id, region: region.region } : null;
         }).filter(region => region !== null); // Remove any null values
 
@@ -48,7 +48,7 @@ export async function edit(data: TEditSchema, selectedRegions: string[]) {
 
     // Map selected regions to region objects
     const selectedRegionObjects = selectedRegions.map(regionName => {
-        const region = regionsInDb.find(r => r.region === regionName);
+        const region = regionsInDb.find(r => r.id === regionName);
         return region ? { id: region.id, region: region.region } : null;
     }).filter(region => region !== null); // Remove any null values
 
@@ -113,6 +113,9 @@ export async function edit(data: TEditSchema, selectedRegions: string[]) {
             )
         )
         .execute();
+
+
+    revalidatePath('/dashboard/subjects')
 
     return updatedSubjects;
 }
