@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    webpack: (config) => {
+        config.resolve.alias.canvas = false;
+        return config;
+    },
     experimental: {
-        serverComponentsExternalPackages: ["@node-rs/argon2"]
+        serverComponentsExternalPackages: ["@node-rs/argon2"],
     },
     images: {
         remotePatterns: [

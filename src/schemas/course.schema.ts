@@ -11,7 +11,13 @@ export const createSchema = z.object({
     context: z.enum(courseContexts),
     status: z.enum(courseStatuses),
     scheduledPublishDate: z.date().optional(),
-    scheduledUnpublishDate: z.date().optional()
+    scheduledUnpublishDate: z.date().optional(),
+    // not in the form
+    price: z.string().optional(),
+    currency: z.string().optional(),
+    enrolledStudents: z.number().optional(),
+    thumbnail: z.string().optional(),
+    promo: z.string().optional(),
 })
 
 export type TCreateSchema = { [key: string]: string } & z.infer<typeof createSchema>

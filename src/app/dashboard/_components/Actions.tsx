@@ -84,6 +84,15 @@ export default function Actions({ row, rowData }: { row: Row<any>, rowData: any 
                             />
                         </>
                     )}
+                    {rowData.table == 'course' && (
+                        <>
+                            <Delete
+                                id={row.getValue('id')}
+                                table={rowData.table}
+                                setPopOpen={setOpen}
+                            />
+                        </>
+                    )}
                 </div>
             </DropdownMenuContent>
         </DropdownMenu >

@@ -5,8 +5,14 @@ export type TTables = "user" | "instructor" | "region" | "governorate" | "year" 
 export type UserRoles = "admin" | "user" | "instructor"
 export type StudentContexts = "school" | "englishExam"
 export type CourseContexts = 'school' | 'englishExam'
-export type CourseStatus = 'published' | 'unpublished' | 'scheduled'
+export type QuestionTypes = 'choose' | 'written' | 'trueOrFalse'
+export type PlaylistStatuses = 'published' | 'unpublished' | 'scheduled'
+export type ExamStatuses = 'published' | 'unpublished' | 'scheduled' | 'draft'
+export type FileStatuses = 'published' | 'unpublished' | 'scheduled'
+export type VideoStatuses = 'published' | 'unpublished' | 'scheduled'
+export type CourseStatuses = 'published' | 'unpublished' | 'scheduled'
 export type SubjectContexts = 'school' | 'englishExam'
+
 export type TUser = {
     id: string;
     firstname: string;
@@ -81,20 +87,99 @@ export type TCourse = {
     title: string;
     description: string;
     instructorId: number;
-    price: number;
+    price: string;
     currency: string;
-    category: string;
     enrolledStudents: number;
-    regionId: number | null;
-    yearId: number | null;
-    examId: number | null;
+    regionId: number;
+    yearId: number;
+    subjectId: number;
     context: CourseContexts;
-    status: CourseStatus;
-    releasedAt: string;
-    updatedAt: string;
-    scheduledPublishDate: string;
-    scheduledUnpublishDate: string;
+    status: CourseStatuses;
+    thumbnail: string;
+    promo: string;
+    releasedAt: Date;
+    updatedAt: Date;
+    scheduledPublishDate: Date | null;
+    scheduledUnpublishDate: Date | null;
 }
+
+export type TVideo = {
+    id: number;
+    title: string;
+    description: string;
+    video: string;
+    thumbnail: string;
+    viewCount: number;
+    status: VideoStatuses;
+    playlistIds: number;
+    courseId: number;
+    releasedAt: Date;
+    updatedAt: Date;
+    scheduledPublishDate: Date | null;
+    scheduledUnpublishDate: Date | null;
+}
+
+export type TPlaylist = {
+    id: number;
+    title: string;
+    description: string;
+    courseId: number;
+    status: PlaylistStatuses;
+    scheduledPublishDate: Date | null;
+    scheduledUnpublishDate: Date | null;
+    files: TFile[],
+    videos: TVideo[],
+    exams: TExam[],
+}
+
+export type TFile = {
+    id: number;
+    title: string;
+    file: string;
+    type: string;
+    size: number;
+    playlistIds: number;
+    courseId: number
+    status: FileStatuses;
+    scheduledPublishDate: Date | null;
+    scheduledUnpublishDate: Date | null;
+}
+
+export type TExam = {
+    id: number;
+    title: string;
+    description: string;
+    duration: number;
+    playlistIds: number;
+    courseId: number;
+    releasedAt: Date;
+    updatedAt: Date;
+    scheduledPublishDate: Date | null;
+    scheduledUnpublishDate: Date | null;
+    status: ExamStatuses;
+}
+
+export type TQuestion = {
+    id: number;
+    question: string;
+    type: QuestionTypes;
+    image: string | null,
+    answers: TAnswer[];
+    examId: number;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export type TAnswer = {
+    id: number;
+    answer: string;
+    isCorrect: boolean;
+    questionId: number;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+
 
 export const columnsRegex = {
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,

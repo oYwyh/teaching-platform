@@ -36,7 +36,7 @@ import { computeSHA256 } from "@/lib/funcs";
 import { UppyFile } from "@uppy/core";
 import { Meta } from "@uppy/core";
 import { getPreSignedUrl } from "@/lib/r2";
-import PromoUpladBox from "@/app/dashboard/_components/PromoUploadBox";
+import VideoUploadBox from "@/app/dashboard/_components/VideoUploadBox";
 import { create } from "@/actions/course.ations";
 import { redirect } from "next/navigation";
 
@@ -57,9 +57,9 @@ export default function CourseCreatePage() {
     const [thumbnailUploadProgress, setThumbnailUploadProgress] = useState<number>(0);
     const [thumbnail, setThumbnail] = useState<{ file: UppyFile<Meta, Record<string, never>>, preview: string } | undefined>(undefined);
     const [thumbnailUploaded, setThumbnailUploaded] = useState<boolean>(false)
-    const [promo, setPromo] = useState<any | undefined>(undefined);
-    const [promoUploadProgress, setPromoUploadProgress] = useState<number>(0);
-    const [promoUploaded, setPromoUploaded] = useState<boolean>(false)
+    const [video, setVideo] = useState<any | undefined>(undefined);
+    const [videoUploadProgress, setVideoUploadProgress] = useState<number>(0);
+    const [videoUploaded, setVideoUploaded] = useState<boolean>(false)
 
     useEffect(() => {
         const fetchRegions = async () => {
@@ -109,14 +109,14 @@ export default function CourseCreatePage() {
                 return;
             }
 
-            // make thumbnail and promo required
+            // make thumbnail and video required
             // if (!thumbnail && !thumbnailUploaded) {
             //     setError('Please upload a thumbnail');
             //     return;
             // }
 
-            // if (!promo && !promoUploaded) {
-            //     setError('Please upload a promo');
+            // if (!video && !videoUploaded) {
+            //     setError('Please upload a video');
             //     return;
             // }
 
@@ -133,7 +133,7 @@ export default function CourseCreatePage() {
 
                 if (!signedUrlResult || !signedUrlResult.success) throw new Error('Failed to get sign URL');
 
-                const { url } = signedUrlResult.success;
+                const { url, fileName } = signedUrlResult.success;
 
                 // Perform the actual file upload to the presigned URL
                 await new Promise<void>((resolve, reject) => {
@@ -150,72 +150,72 @@ export default function CourseCreatePage() {
 
                     xhr.onload = () => {
                         if (xhr.status === 200) {
-                            console.log('File uploaded successfully');
-                            data['thumbnail'] = thumbnail.file.source == 'Webcam' ? thumbnail.file.name : thumbnail.file.data.name,
-                                setError('')
+                            console.log('Thumbnail uploaded successfully');
+                            data['thumbnail'] = fileName;
+                            setError('')
                             setThumbnailUploaded(true);
                             resolve();
                         } else {
-                            console.log('File upload failed');
-                            reject(new Error('File upload failed'));
+                            console.log('Thumbnail upload failed');
+                            reject(new Error('Thumbnail upload failed'));
                         }
                     };
 
                     xhr.onerror = () => {
-                        console.log('File upload failed');
-                        reject(new Error('File upload failed'));
+                        console.log('Thumbnail upload failed');
+                        reject(new Error('Thumbnail upload failed'));
                     };
 
                     xhr.send(thumbnail.file.data);
                 });
             }
 
-            if (promo) {
-                const checkSum = await computeSHA256(promo.file.data);
+            if (video) {
+                const checkSum = await computeSHA256(video.file.data);
                 const signedUrlResult = await getPreSignedUrl({
-                    key: promo.file.name,
-                    type: promo.file.data.type,
-                    size: promo.file.data.size,
+                    key: video.file.name,
+                    type: video.file.data.type,
+                    size: video.file.data.size,
                     checkSum,
                     format: 'vid',
                 });
 
                 if (!signedUrlResult || !signedUrlResult.success) throw new Error('Failed to get sign URL');
 
-                const { url } = signedUrlResult.success;
+                const { url, fileName } = signedUrlResult.success;
 
                 // Perform the actual file upload to the presigned URL
                 await new Promise<void>((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open('PUT', url, true);
-                    xhr.setRequestHeader('Content-Type', promo.file.data.type);
+                    xhr.setRequestHeader('Content-Type', video.file.data.type);
 
                     xhr.upload.onprogress = (event) => {
                         if (event.lengthComputable) {
                             const percentComplete = Math.round((event.loaded / event.total) * 100);
-                            setPromoUploadProgress(percentComplete);
+                            setVideoUploadProgress(percentComplete);
                         }
                     };
 
                     xhr.onload = () => {
                         if (xhr.status === 200) {
-                            console.log('File uploaded successfully');
-                            data['promo'] = promo.file.name;
+                            console.log('Video uploaded successfully');
+                            data['promo'] = fileName;
                             setError('')
-                            setPromoUploaded(true);
+                            setVideoUploaded(true);
                             resolve();
                         } else {
-                            console.log('File upload failed');
-                            reject(new Error('File upload failed'));
+                            console.log('Video upload failed');
+                            reject(new Error('Video upload failed'));
                         }
                     };
 
                     xhr.onerror = () => {
-                        console.log('File upload failed');
-                        reject(new Error('File upload failed'));
+                        console.log('Video upload failed');
+                        reject(new Error('Video upload failed'));
                     };
 
-                    xhr.send(promo.file.data);
+                    xhr.send(video.file.data);
                 });
             }
             setError('')
@@ -244,25 +244,25 @@ export default function CourseCreatePage() {
             <div className="grid grid-cols-3 gap-4 p-4">
                 <div className="flex flex-col gap-5 col-span-1">
                     <ThumbnailUploadBox thumbnail={thumbnail} setThumbnail={setThumbnail} uploadProgress={thumbnailUploadProgress} />
-                    <PromoUpladBox promo={promo} setPromo={setPromo} uploadProgress={promoUploadProgress} />
+                    <VideoUploadBox video={video} setVideo={setVideo} uploadProgress={videoUploadProgress} />
                 </div>
                 <Form {...form}>
-                    <ScrollArea className="mt-5 max-h-[80vh] h-fit w-full col-span-2 rounded-md border p-4">
+                    <ScrollArea className="mt-5 overflow-y-scroll h-fit w-full col-span-2 rounded-md border p-4">
                         <form onSubmit={form.handleSubmit(onSubmit)}>
                             <div className="flex flex-row gap-3 item-center">
-                                <FormField form={form} name="context" select="courseContext" setState={setCourseContext} />
+                                <FormField form={form} name="context" select="courseContext" setState={setCourseContext} label={'This course is for'} />
                             </div>
                             {courseContext && (
                                 <>
                                     <FormField form={form} name="title" />
                                     <FormField form={form} name="description" textarea />
-                                    <FormField form={form} name='instructorId' select={'instructor'} instructors={instructors} />
+                                    <FormField form={form} name='instructorId' select={'instructor'} instructors={instructors} label="Instructor" />
                                     <div className="flex flex-row gap-3 item-center">
-                                        <FormField form={form} name='regionId' select='region' regions={regions} setState={setSelectedRegionId} />
+                                        <FormField form={form} name='regionId' select='region' regions={regions} setState={setSelectedRegionId} label="Region" />
                                         {selectedRegion && (
                                             <>
-                                                <FormField form={form} name='yearId' select='year' years={years} region={selectedRegion} />
-                                                <FormField form={form} name='subjectId' select='subject' subjects={subjects} region={selectedRegion} />
+                                                <FormField form={form} name='yearId' select='year' years={years} region={selectedRegion} label="Year" />
+                                                <FormField form={form} name='subjectId' select='subject' subjects={subjects} region={selectedRegion} label="Subject" />
                                             </>
                                         )}
                                     </div>
@@ -289,6 +289,8 @@ export default function CourseCreatePage() {
                                             />
                                         </div>
                                     )}
+                                    <FormField form={form} name='scheduledPublishDate' type='date' label="Scheduled Publish Date" optional />
+                                    <FormField form={form} name='scheduledUnpublishDate' type='date' label="Scheduled Unpublish Date" optional />
                                     <FormField form={form} name='status' select='courseStatus' defaultValue="unpublished" />
                                     {error && (
                                         <p className="text-red-500 mt-2">{error}</p>

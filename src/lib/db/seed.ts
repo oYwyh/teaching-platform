@@ -1,7 +1,7 @@
 'use server'
 
 import db from "@/lib/db";
-import { courseTable, governorateTable, instructorTable, regionTable, roleTable, sessionTable, studentTable, subjectTable, userTable, yearTable } from "@/lib/db/schema";
+import { courseTable, governorateTable, instructorTable, regionTable, sessionTable, studentTable, subjectTable, userTable, yearTable } from "@/lib/db/schema";
 import { StudentContexts } from "@/types/index.type";
 import { hash } from "@node-rs/argon2";
 import { generateIdFromEntropySize } from "lucia";
@@ -29,6 +29,7 @@ export async function seed() {
             regionId: 1,
             governorateId: 1,
             password: password,
+            role: 'admin'
         },
         {
             id: instructorId,
@@ -39,6 +40,7 @@ export async function seed() {
             regionId: 2,
             governorateId: 2,
             password: password,
+            role: 'instructor'
         },
         {
             id: schoolStudentId,
@@ -49,6 +51,7 @@ export async function seed() {
             regionId: 1,
             governorateId: 1,
             password: password,
+            role: 'user'
         },
         {
             id: englishExamStudentId,
@@ -59,6 +62,7 @@ export async function seed() {
             regionId: 2,
             governorateId: 3,
             password: password,
+            role: 'user'
         },
     ];
 
@@ -187,28 +191,6 @@ export async function seed() {
         },
     ]
 
-    const roles = [
-        {
-            id: 1,
-            role: 'admin',
-            userId: adminId
-        },
-        {
-            id: 2,
-            role: 'instructor',
-            userId: instructorId
-        },
-        {
-            id: 3,
-            role: 'user',
-            userId: schoolStudentId
-        },
-        {
-            id: 4,
-            role: 'user',
-            userId: englishExamStudentId
-        },
-    ]
 
     for (const region of regions) {
         await db
@@ -253,13 +235,6 @@ export async function seed() {
             .insert(studentTable)
             .values(student)
     }
-
-    for (const role of roles) {
-        await db
-            .insert(roleTable)
-            .values(role)
-    }
-
     console.log('Database seeded');
 }
 
@@ -271,7 +246,6 @@ export async function destroy() {
     await db.delete(courseTable).execute();
     await db.delete(instructorTable).execute();
     await db.delete(studentTable).execute();
-    await db.delete(roleTable).execute();
     await db.delete(sessionTable).execute();
     await db.delete(subjectTable).execute();
 

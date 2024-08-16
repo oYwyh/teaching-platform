@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { decimal, integer, pgEnum, pgTable, PgTimestampBuilderInitial, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, decimal, integer, PgArray, pgEnum, pgTable, PgTimestampBuilderInitial, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 export const timestamps = (): {
     createdAt: PgTimestampBuilderInitial<"createdAt">;
@@ -28,14 +28,6 @@ export const userTable = pgTable("user", {
     governorateId: integer("governorateId").references(() => governorateTable.id, { onDelete: 'no action' }).notNull(),
     password: text("password").notNull(),
     picture: text("picture").default('default.jpg').notNull(),
-    ...timestamps(),
-});
-
-export const roleTable = pgTable("role", {
-    id: serial("id").primaryKey(),
-    userId: text("userId")
-        .notNull()
-        .references(() => userTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     role: UserRoles("role").default("user").notNull(),
     ...timestamps(),
 });
@@ -95,7 +87,11 @@ export const subjectTable = pgTable("subject", {
 });
 
 export const CourseContexts = pgEnum("courseContexts", ["school", "englishExam"]);
-export const CourseStatus = pgEnum("courseStatus", ["published", "unpublished", 'scheduled']);
+export const CourseStatuses = pgEnum("courseStatuses", ["published", "unpublished", 'scheduled']);
+export const ExamStatuses = pgEnum("examStatuses", ["published", "unpublished", 'scheduled', 'draft']);
+export const VideoStatuses = pgEnum("videoStatuses", ["published", "unpublished", 'scheduled']);
+export const FileStatuses = pgEnum("fileStatuses", ["published", "unpublished", 'scheduled']);
+export const PlaylistStatuses = pgEnum("playlistStatuses", ["published", "unpublished", 'scheduled']);
 
 export const courseTable = pgTable("course", {
     id: serial("id").primaryKey(),
@@ -111,12 +107,86 @@ export const courseTable = pgTable("course", {
     yearId: integer("yearId").references(() => yearTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     subjectId: integer("subjectId").references(() => subjectTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     context: CourseContexts("context").notNull(),
-    status: CourseStatus('status').default('published').notNull(),
+    status: CourseStatuses('status').default('unpublished').notNull(),
     releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp('updatedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
     scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
     scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
-});
+})
+
+export const playlistTable = pgTable("playlist", {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    status: PlaylistStatuses('status').default('published').notNull(),
+    scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
+    scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
+    courseId: integer("courseId").references(() => courseTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+    releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+})
+
+export const videoTable = pgTable("video", {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    video: text("video").notNull(),
+    thumbnail: text("thumbnail").default('thumbnail.jpg').notNull(),
+    status: VideoStatuses('status').default('published').notNull(),
+    viewCount: integer("viewCount").default(0).notNull(),
+    scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
+    scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
+    courseId: integer("courseId").references(() => courseTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+    playlistIds: text("playlistIds"),
+    releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+})
+
+export const fileTable = pgTable("file", {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    file: text("file").notNull(),
+    type: text("type").notNull(),
+    size: integer("size").notNull(),
+    status: FileStatuses('status').default('published').notNull(),
+    playlistIds: text("playlistIds"),
+    courseId: integer("courseId").references(() => courseTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+    scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
+    scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
+    releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+})
+
+export const examTable = pgTable('exam', {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    description: text('description').notNull(),
+    duration: integer('duration').default(3600).notNull(),
+    courseId: integer('courseId').references(() => courseTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+    status: ExamStatuses('status').default('published').notNull(),
+    playlistIds: text("playlistIds"),
+    scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
+    scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
+    releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+})
+
+export const QuestionTypes = pgEnum('questionTypes', ['choose', 'written', 'trueOrFalse'])
+
+export const questionTable = pgTable('question', {
+    id: serial('id').primaryKey(),
+    question: text('question').notNull(),
+    image: text('image'),
+    type: QuestionTypes('type').default('choose').notNull(),
+    examId: integer('examId').references(() => examTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+    ...timestamps()
+})
+
+export const answerTable = pgTable('answer', {
+    id: serial('id').primaryKey(),
+    answer: text('answer').notNull(),
+    isCorrect: boolean('isCorrect').default(false).notNull(),
+    questionId: integer('questionId').references(() => questionTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+})
 
 export const sessionTable = pgTable("session", {
     id: text("id").primaryKey(),
@@ -132,15 +202,7 @@ export const sessionTable = pgTable("session", {
 
 // relations
 
-export const roleRelations = relations(roleTable, ({ one }) => ({
-    user: one(userTable, {
-        fields: [roleTable.userId],
-        references: [userTable.id],
-    })
-}));
-
 export const userRelations = relations(userTable, ({ one, many }) => ({
-    roles: many(roleTable),
     instructor: one(instructorTable, {
         fields: [userTable.id],
         references: [instructorTable.userId],
@@ -189,7 +251,7 @@ export const subjectRelations = relations(subjectTable, ({ one, many }) => ({
     }),
 }))
 
-export const courseRelations = relations(courseTable, ({ one }) => ({
+export const courseRelations = relations(courseTable, ({ one, many }) => ({
     instructor: one(instructorTable, {
         fields: [courseTable.instructorId],
         references: [instructorTable.id]
@@ -201,5 +263,57 @@ export const courseRelations = relations(courseTable, ({ one }) => ({
     subject: one(subjectTable, {
         fields: [courseTable.subjectId],
         references: [subjectTable.id]
+    }),
+    year: one(yearTable, {
+        fields: [courseTable.yearId],
+        references: [yearTable.id]
+    }),
+    playlist: many(playlistTable),
+    videos: many(videoTable),
+    files: many(fileTable),
+    exam: many(examTable),
+}))
+
+export const videoRelations = relations(videoTable, ({ one, many }) => ({
+    course: one(courseTable, {
+        fields: [videoTable.courseId],
+        references: [courseTable.id]
+    }),
+}))
+
+export const playlistRelations = relations(playlistTable, ({ one, many }) => ({
+    course: one(courseTable, {
+        fields: [playlistTable.courseId],
+        references: [courseTable.id]
+    }),
+}))
+
+export const fileRelations = relations(fileTable, ({ one }) => ({
+    course: one(courseTable, {
+        fields: [fileTable.courseId],
+        references: [courseTable.id]
+    }),
+}))
+
+export const examRelations = relations(examTable, ({ one, many }) => ({
+    course: one(courseTable, {
+        fields: [examTable.courseId],
+        references: [courseTable.id]
+    }),
+    questions: many(questionTable),
+}))
+
+export const questionRelations = relations(questionTable, ({ one, many }) => ({
+    exam: one(examTable, {
+        fields: [questionTable.examId],
+        references: [examTable.id]
+    }),
+    answers: many(answerTable),
+}))
+
+export const answerRelations = relations(answerTable, ({ one }) => ({
+    question: one(questionTable, {
+        fields: [answerTable.questionId],
+        references: [questionTable.id]
     })
 }))

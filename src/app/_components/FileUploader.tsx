@@ -1,10 +1,10 @@
 'use client'
 
-import { deleteFile, getPreSignedUrl, restoreDefaultPfp, uploadFileFromUrl } from "@/lib/r2";
+import { deleteFile, getPreSignedUrl, restoreDefaultPfp } from "@/lib/r2";
 import { Dispatch, SetStateAction, useRef } from "react";
 import Uppy, { Meta, UppyFile } from "@uppy/core";
 import Webcam from "@uppy/webcam";
-import { DashboardModal } from "@uppy/react";
+import { DashboardModal, Dashboard } from "@uppy/react";
 import ImageEditor from "@uppy/image-editor";
 import AwsS3, { AwsBody, AwsS3UploadParameters } from '@uppy/aws-s3';
 import Url from '@uppy/url';
@@ -17,6 +17,7 @@ import { revalidatePathAction } from "@/lib/r2";
 import { revalidatePath } from "next/cache";
 import { computeSHA256 } from "@/lib/funcs";
 import { RequestOptions } from "https";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function FileUploader(
     {
@@ -33,13 +34,13 @@ export default function FileUploader(
         : {
             open: boolean,
             setOpen: Dispatch<SetStateAction<boolean>>,
-            setState?: Dispatch<SetStateAction<{ file: UppyFile<Meta, Record<string, never>>, preview: string } | undefined>>;
+            setState?: Dispatch<SetStateAction<{ file: UppyFile<Meta, Record<string, never>> | undefined, preview: string } | undefined>>;
             limit?: number,
             sizeLimit?: number,
             userId?: string,
             pfp?: boolean,
             picToDelete?: string,
-            format?: 'img' | 'vid',
+            format?: 'img' | 'vid' | 'file',
         }) {
     const files = useRef<string[]>([]);
 
@@ -47,7 +48,7 @@ export default function FileUploader(
         autoProceed: false,
     }).use(ImageEditor).use(Url, { companionUrl: '/' });
 
-    if (format == 'img') {
+    if (format == 'img' || format == 'file') {
         uppy.use(Webcam, {
             modes: ['picture'],
             mirror: false,
@@ -124,6 +125,11 @@ export default function FileUploader(
             setState({ file: updatedFile, preview: videoUrl }); // Set state with updated file
             setOpen(false);
         }
+        if (format === 'file' && setState) {
+            const fileUrl = URL.createObjectURL(updatedFile.data); // Use the updated file's data for preview
+            setState({ file: updatedFile, preview: fileUrl }); // Set state with updated file
+            setOpen(false);
+        }
 
         if (limit) {
             if (uppy.getFiles().length > limit) {
@@ -137,28 +143,19 @@ export default function FileUploader(
         }
     })
 
-    const handleUrlUpload = async (url) => {
-        try {
-            const fileName = await uploadFileFromUrl({ fileUrl: url, userId, pfp, format });
-            console.log('File uploaded from URL:', fileName);
-            setOpen(false); // Close the modal after successful upload
-        } catch (error) {
-            console.error('Error uploading file from URL:', error);
-        }
-    };
-
     return (
         <>
-            <DashboardModal
-                id="dashboard"
-                closeAfterFinish={true}
-                closeModalOnClickOutside={true}
-                open={open}
-                uppy={uppy}
-                proudlyDisplayPoweredByUppy={false}
-                showProgressDetails={true}
-                theme="dark"
-            />
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="max-w-fit p-0 m-0 border-0 text-white">
+                    <Dashboard
+                        id="dashboard"
+                        uppy={uppy}
+                        proudlyDisplayPoweredByUppy={false}
+                        showProgressDetails={true}
+                        theme="dark"
+                    />
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

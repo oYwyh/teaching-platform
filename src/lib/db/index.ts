@@ -4,7 +4,11 @@ import postgres from 'postgres' // getting the database driver
 
 import { type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
-const client = postgres(process.env.DATABASE_URL as string)
+const client = postgres(process.env.DATABASE_URL as string, {
+    max: 1, // Max number of clients in the pool
+    ssl: false // if you are using SSL
+});
+
 export const db: PostgresJsDatabase<typeof schema> = drizzle(client, { schema, logger: true /* to log all the sql query we make */ })
 
 export default db;

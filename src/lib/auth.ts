@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { sessionTable, userTable } from "@/lib/db/schema";
 import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle";
-import { Lucia } from "lucia";
+import { Lucia, User } from "lucia";
 import { TUser } from "@/types/index.type";
 import { Session } from "lucia";
 
@@ -29,13 +29,12 @@ export const lucia = new Lucia(adapter, {
             regionId: attributes.regionId,
             governorateId: attributes.governorateId,
             picture: attributes.picture,
-            role: attributes.role,
         };
     },
 });
 
 export const validateRequest = cache(
-    async (): Promise<{ user: TUser; session: Session } | { user: null; session: null }> => {
+    async (): Promise<{ user: User; session: Session } | { user: null; session: null }> => {
         const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
         if (!sessionId) {
             return {

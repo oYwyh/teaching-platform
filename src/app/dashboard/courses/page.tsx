@@ -8,11 +8,37 @@ import { eq } from "drizzle-orm";
 import { TCourse } from "@/types/index.type";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { getById } from "@/actions/index.actions";
+import { ItemIndicator } from "@radix-ui/react-select";
 
-async function getData(): Promise<TCourse[]> {
-    const courses = await db.query.courseTable.findMany().execute()
+async function getData() {
+    const data = await db.select().from(courseTable)
 
-    return courses
+
+    const courses = Promise.all(data.map(async (item) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        instructor: await getById(item.instructorId, 'instructor', true),
+        price: item.price,
+        currency: item.currency,
+        enrolledStudents: item.enrolledStudents,
+        region: await getById(item.regionId || undefined, 'region', true),
+        regionId: item.regionId,
+        year: await getById(item.yearId || undefined, 'year', true),
+        yearId: item.yearId,
+        subject: await getById(item.subjectId || undefined, 'subject', true),
+        subjectId: item.subjectId,
+        context: item.context,
+        status: item.status,
+        releasedAt: new Date(item.releasedAt).toLocaleDateString(),
+        updatedAt: new Date(item.updatedAt).toLocaleDateString(),
+        scheduledPublishDate: item.scheduledPublishDate ? new Date(item.scheduledPublishDate).toLocaleDateString() : null,
+        scheduledUnpublishDate: item.scheduledUnpublishDate ? new Date(item.scheduledUnpublishDate).toLocaleDateString() : null,
+        table: 'course'
+    })))
+
+    return courses;
 }
 
 export default async function CoursePage() {
@@ -22,7 +48,6 @@ export default async function CoursePage() {
 
     return (
         <div>
-            {/* <Add /> */}
             <Link href="/dashboard/courses/create">
                 <Button>create</Button>
             </Link>
@@ -30,7 +55,7 @@ export default async function CoursePage() {
                 columns={CoursesTableColumns}
                 search="title"
                 data={courses}
-                hiddenColumns={['id', 'regionId', 'yearId', 'instructorId', 'examId', 'table']}
+                hiddenColumns={['id', 'regionId', 'yearId', 'instructorId', 'subjectId', 'table']}
                 restrictedColumns={['table']}
             />
         </div>

@@ -14,7 +14,7 @@ import { baseColumns, BaseColumnsTypes, SelectTableColumn, ExportTableColumn } f
 import Actions from "@/app/dashboard/_components/Actions"
 import { getGovernorateArabicName } from "@/lib/funcs"
 import RemoveDialog from "@/app/dashboard/_components/RemoveDialog"
-import { studentContexts, subjectContexts } from "@/constants/index.constant"
+import { courseContexts, studentContexts, subjectContexts } from "@/constants/index.constant"
 import { ScrollArea } from "@radix-ui/react-scroll-area"
 import { TCourse, TInstructor, TRegion, TStudent, TSubject, TUser } from "@/types/index.type"
 
@@ -26,15 +26,17 @@ const coursesColumns = [
     'id',
     'title',
     'description',
+    'instructor',
     'instructorId',
     'price',
     'currency',
-    'category',
     'enrolledStudents',
+    'region',
     'regionId',
+    'subject',
     'subjectId',
+    'year',
     'yearId',
-    'context',
     'status',
     'releasedAt',
     'updatedAt',
@@ -310,24 +312,31 @@ export const CoursesTableColumns: ColumnDef<TCourse>[] = [
                 <DataTableColumnHeader column={column} title={column.name || column.id} />
             )
         },
-        cell: ({ cell, row }: { cell: Cell<any, any>, row: Row<any> }) => {
-            return (
-                <>
-
-                    {cell.column.id == 'table' && (
-                        <>region</>
-                    )}
-                    {
-                        cell.column.id != 'table' && (
-                            <>
-                                <p>{cell.getValue()}</p>
-                            </>
-                        )
-                    }
-                </>
-            )
-        }
     })),
+    {
+        accessorKey: "context",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Context" />
+        ),
+        cell: ({ row }) => {
+            const context = courseContexts.find(
+                (context) => context.value === row.getValue("context")
+            )
+
+            if (!context) {
+                return null
+            }
+
+            return (
+                <div className="flex w-[100px] items-center">
+                    <span>{context.labelEn}</span>
+                </div>
+            )
+        },
+        filterFn: (row, id, value) => {
+            return value.includes(row.getValue(id))
+        },
+    },
     ...ActionsTableColumn,
     ...ExportTableColumn
 ]

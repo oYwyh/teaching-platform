@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input"
 import { DataTableToolbar } from "@/components/ui/table/DataTableToolbar"
 import { DataTableViewOptions } from "@/components/ui/table/DataTableViewOptions"
 import { DataTablePagination } from "@/components/ui/table/DataTablePagination"
-
+import { useRouter } from 'next/navigation'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -59,6 +59,7 @@ export function DataTable<TData, TValue>({
     );
 
   const [rowSelection, setRowSelection] = React.useState({})
+  const router = useRouter();
 
   const table = useReactTable({
     data,
@@ -96,7 +97,6 @@ export function DataTable<TData, TValue>({
           <DataTableToolbar table={table} />
         </div>
         <DataTableViewOptions table={table} restrictedColumns={restrictedColumns} />
-
       </div>
       <div className="rounded-md border">
         <Table>
@@ -124,6 +124,13 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={`${row.getValue('table') && 'cursor-pointer'}`}
+                  onClick={() => {
+                    if (row.getValue('table')) {
+                      return router.push('/dashboard/courses/' + row.getValue('id'));
+                    }
+                    return;
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => {
                     return (

@@ -8,7 +8,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { courseContexts, courseStatuses, governorates as governoratesConst, regions as regionsConst, specialties, studentContexts, subjectContexts, subjects as subjectsConst, years as yearsConst } from "@/constants/index.constant";
+import { courseContexts, courseStatuses, examStatuses, fileStatuses, governorates as governoratesConst, playlistStatuses, regions as regionsConst, specialties, studentContexts, subjectContexts, subjects as subjectsConst, videoStatuses, years as yearsConst } from "@/constants/index.constant";
 import {
     Command,
     CommandDialog,
@@ -21,12 +21,16 @@ import {
     CommandShortcut,
 } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { CalendarIcon, Check, ChevronsUpDown, CircleEllipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { TIndex, TOptions } from "@/types/index.type";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 type TFormField = {
@@ -34,12 +38,15 @@ type TFormField = {
         control: Control<any>;
     };
     name: string,
+    placeholder?: string,
     label?: string,
     select?: string,
+    checkbox?: boolean,
     disabled?: boolean,
+    optional?: boolean,
     type?: string,
     textarea?: boolean,
-    defaultValue?: string,
+    defaultValue?: string | number,
     setState?: any,
     existing?: string[],
     region?: string,
@@ -49,14 +56,19 @@ type TFormField = {
     instructors?: { label: string, value: number }[],
     context?: TIndex<string> | string,
     subjects?: TIndex<TOptions> | TOptions,
+    onUnFocus?: () => void,
+    transparent?: boolean
 }
 
 export default function FormField({
     form,
     name,
+    placeholder,
     label,
     select,
+    checkbox,
     disabled,
+    optional,
     type,
     textarea,
     defaultValue,
@@ -68,7 +80,9 @@ export default function FormField({
     years,
     instructors,
     context,
-    subjects
+    subjects,
+    onUnFocus,
+    transparent
 }: TFormField) {
     const {
         field,
@@ -92,18 +106,35 @@ export default function FormField({
                 render={({ field: { onChange, value } }) => {
                     return (
                         <>
-                            <FormItem className="w-[100%]">
-                                {!select && !textarea && (
+                            <FormItem className="space-y-0 w-[100%]">
+                                {!select && !textarea && type != 'date' && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className={`flex flex-row gap-2 items-center`}>
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <FormControl>
                                             <Input
                                                 onChange={onChange}
-                                                className="capitalize"
+                                                className={`capitalize ${transparent ? "bg-transparent border-0 shadow-md" : ""}`}
                                                 disabled={disabled}
                                                 value={value}
                                                 type={type}
-                                                placeholder={`Enter ${name}`}
+                                                placeholder={`${placeholder ? placeholder : `Enter ${name}`}`}
+                                                onBlur={onUnFocus}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -111,22 +142,104 @@ export default function FormField({
                                 )}
                                 {!select && textarea && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <FormControl>
                                             <Textarea
                                                 onChange={onChange}
                                                 className="capitalize h-fit"
                                                 disabled={disabled}
                                                 value={value}
-                                                placeholder={`Enter ${name}`}
+                                                placeholder={`${placeholder ? placeholder : `Enter ${name}`}`}
+                                                onBlur={onUnFocus}
                                             />
                                         </FormControl>
                                         <FormMessage />
                                     </>
                                 )}
+                                {type == 'date' && (
+                                    <>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-full pl-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value ? (
+                                                            format(field.value, "PPP")
+                                                        ) : (
+                                                            <span>Pick a date</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-full p-0" align="start">
+                                                <Calendar
+                                                    className="w-full"
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date: Date) =>
+                                                        date < new Date() || date < new Date("1900-01-01")
+                                                    }
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </>
+                                )}
                                 {select == 'governorate' && region && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -172,7 +285,23 @@ export default function FormField({
                                 )}
                                 {select == 'year' && region && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={!!type}>{label || name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -219,7 +348,23 @@ export default function FormField({
                                 )}
                                 {select == 'region' && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -270,7 +415,23 @@ export default function FormField({
                                 )}
                                 {select == 'specialty' && (
                                     <div className="flex flex-col gap-2">
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -315,8 +476,19 @@ export default function FormField({
                                 )}
                                 {select == 'studentContext' && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>Why are you here</FormLabel>
-                                        <Popover>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>                                        <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
                                                     <Button
@@ -361,7 +533,19 @@ export default function FormField({
                                 )}
                                 {select == 'subjectContext' && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>This subject is a</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -407,7 +591,23 @@ export default function FormField({
                                 )}
                                 {select == 'courseContext' && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>This course is for</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -453,7 +653,23 @@ export default function FormField({
                                 )}
                                 {select == 'subject' && context && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -502,7 +718,23 @@ export default function FormField({
                                 )}
                                 {select == 'subject' && region && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -548,7 +780,23 @@ export default function FormField({
                                 )}
                                 {select == 'englishExam' && subjects && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -594,7 +842,23 @@ export default function FormField({
                                 )}
                                 {select == 'instructor' && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -639,10 +903,25 @@ export default function FormField({
                                         <FormMessage>{fieldError?.message}</FormMessage>
                                     </>
                                 )}
-
                                 {select == 'courseStatus' && (
                                     <>
-                                        <FormLabel className="capitalize" hidden={type ? true : false}>{label ? label : name}</FormLabel>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                         <Popover>
                                             <PopoverTrigger disabled={disabled} asChild>
                                                 <FormControl>
@@ -664,6 +943,258 @@ export default function FormField({
                                                     <CommandEmpty>No status found.</CommandEmpty>
                                                     <CommandGroup className="overflow-y-scroll max-h-[200px]">
                                                         {courseStatuses?.map((status: any) => (
+                                                            <CommandItem
+                                                                value={status.value}
+                                                                key={status.value}
+                                                                onSelect={() => {
+                                                                    field.onChange(status.value);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        status.value === value ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {status.value}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage>{fieldError?.message}</FormMessage>
+                                    </>
+                                )}
+                                {select == 'videoStatus' && (
+                                    <>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                        <Popover>
+                                            <PopoverTrigger disabled={disabled} asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
+                                                    >
+                                                        {value
+                                                            ? videoStatuses?.find((status: any) => status?.value === value)?.value
+                                                            : "Select status"}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[100%] p-0" align="start">
+                                                <Command className="w-[100%]">
+                                                    <CommandInput placeholder="Search status..." />
+                                                    <CommandEmpty>No status found.</CommandEmpty>
+                                                    <CommandGroup className="overflow-y-scroll max-h-[200px]">
+                                                        {videoStatuses?.map((status: any) => (
+                                                            <CommandItem
+                                                                value={status.value}
+                                                                key={status.value}
+                                                                onSelect={() => {
+                                                                    field.onChange(status.value);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        status.value === value ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {status.value}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage>{fieldError?.message}</FormMessage>
+                                    </>
+                                )}
+                                {select == 'playlistStatus' && (
+                                    <>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                        <Popover>
+                                            <PopoverTrigger disabled={disabled} asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
+                                                    >
+                                                        {value
+                                                            ? playlistStatuses?.find((status: any) => status?.value === value)?.value
+                                                            : "Select status"}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[100%] p-0" align="start">
+                                                <Command className="w-[100%]">
+                                                    <CommandInput placeholder="Search status..." />
+                                                    <CommandEmpty>No status found.</CommandEmpty>
+                                                    <CommandGroup className="overflow-y-scroll max-h-[200px]">
+                                                        {playlistStatuses?.map((status: any) => (
+                                                            <CommandItem
+                                                                value={status.value}
+                                                                key={status.value}
+                                                                onSelect={() => {
+                                                                    field.onChange(status.value);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        status.value === value ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {status.value}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage>{fieldError?.message}</FormMessage>
+                                    </>
+                                )}
+                                {select == 'fileStatus' && (
+                                    <>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                        <Popover>
+                                            <PopoverTrigger disabled={disabled} asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
+                                                    >
+                                                        {value
+                                                            ? fileStatuses?.find((status: any) => status?.value === value)?.value
+                                                            : "Select status"}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[100%] p-0" align="start">
+                                                <Command className="w-[100%]">
+                                                    <CommandInput placeholder="Search status..." />
+                                                    <CommandEmpty>No status found.</CommandEmpty>
+                                                    <CommandGroup className="overflow-y-scroll max-h-[200px]">
+                                                        {fileStatuses?.map((status: any) => (
+                                                            <CommandItem
+                                                                value={status.value}
+                                                                key={status.value}
+                                                                onSelect={() => {
+                                                                    field.onChange(status.value);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        status.value === value ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {status.value}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage>{fieldError?.message}</FormMessage>
+                                    </>
+                                )}
+                                {select == 'examStatus' && (
+                                    <>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                        <Popover>
+                                            <PopoverTrigger disabled={disabled} asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
+                                                    >
+                                                        {value
+                                                            ? examStatuses?.find((status: any) => status?.value === value)?.value
+                                                            : "Select status"}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[100%] p-0" align="start">
+                                                <Command className="w-[100%]">
+                                                    <CommandInput placeholder="Search status..." />
+                                                    <CommandEmpty>No status found.</CommandEmpty>
+                                                    <CommandGroup className="overflow-y-scroll max-h-[200px]">
+                                                        {examStatuses?.map((status: any) => (
                                                             <CommandItem
                                                                 value={status.value}
                                                                 key={status.value}

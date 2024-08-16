@@ -8,7 +8,6 @@ import {
     regionTable,
     userTable,
     yearTable,
-    roleTable,
     studentTable,
     instructorTable,
     courseTable,
@@ -291,9 +290,8 @@ export const getSubjects = async (context?: 'school' | 'englishExam') => {
 export const getInstructors = async () => {
     const data = await db.select()
         .from(userTable)
-        .leftJoin(roleTable, eq(roleTable.userId, userTable.id))
         .leftJoin(instructorTable, eq(instructorTable.userId, userTable.id))
-        .where(eq(roleTable.role, 'instructor'));
+        .where(eq(userTable.role, 'instructor'));
 
     const instructors = data.map((item: any) => ({
         label: item.user.firstname + ' ' + item.user.lastname,
@@ -312,8 +310,7 @@ export const getUser = async (): Promise<TFullUserData | null> => {
     }
 
     // Fetch user role
-    const role = await db.query.roleTable.findFirst({ where: (roleTable, { eq }) => eq(roleTable.userId, user.id) });
-    const userRole = role?.role ?? 'user';
+    const userRole = user?.role ?? 'user';
 
     if (userRole === 'user') {
         // Fetch student-specific data
@@ -365,6 +362,13 @@ export const getById = async (id: string | number | undefined, table: keyof type
     const columnName = columnMap[table]; // Use provided column or default to mapped column
 
     const result = await db.select().from(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
+
+    if (table == 'instructor') {
+        const user = await db.query.userTable.findFirst({
+            where: sql`${userTable.id} = ${result[0]?.userId}`
+        })
+        return user?.firstname + ' ' + user?.lastname
+    }
 
     return column ? result[0]?.[columnName] : result[0];
 }

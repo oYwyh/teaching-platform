@@ -10,6 +10,7 @@ import { revalidatePath } from 'next/cache'
 import { sql } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import axios from 'axios'
+import { fileTypes, imageTypes, videoTypes } from '@/constants/index.constant'
 
 const S3 = new S3Client({
     region: 'auto',
@@ -23,9 +24,9 @@ const S3 = new S3Client({
 
 const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
 
-const acceptedPfpTypes = ['image/jpg', 'image/png', 'image/jpeg', 'image/webp']
-const acceptedTypes = ['image/jpg', 'image/png', 'image/jpeg', 'image/webp', 'application/pdf']
-const acceptedVidTypes = ['video/mp4', 'video/webm']
+const acceptedTypes = [...imageTypes, ...fileTypes]
+const acceptedImgTypes = [...imageTypes]
+const acceptedVidTypes = [...videoTypes]
 
 export async function getPreSignedUrl({
     key,
@@ -40,7 +41,7 @@ export async function getPreSignedUrl({
     key: string | '',
     type: string,
     size: number,
-    format: 'img' | 'vid'
+    format: 'img' | 'vid' | 'file'
     sizeLimit?: number,
     checkSum?: string,
     userId?: string,
@@ -53,9 +54,10 @@ export async function getPreSignedUrl({
 
     if (size > sizeLimit) throw new Error('File size too large')
 
-    if (pfp && !acceptedPfpTypes.includes(type)) throw new Error('Unsupported file type')
-    if (!pfp && format === 'img' && !acceptedTypes.includes(type)) throw new Error('Unsupported file type')
-    if (!pfp && format === 'vid' && !acceptedVidTypes.includes(type)) throw new Error('Unsupported file type')
+    if (pfp && !acceptedImgTypes.includes(type)) throw new Error('Unsupported file type')
+    if (!pfp && format === 'img' && !acceptedImgTypes.includes(type)) throw new Error('Unsupported file type')
+    if (format === 'vid' && !acceptedVidTypes.includes(type)) throw new Error('Unsupported file type')
+    if (format === 'file' && !acceptedTypes.includes(type)) throw new Error('Unsupported file type')
 
     const fileName = generateFileName() + `-${key}`;
     const putObjectCommand = new PutObjectCommand({
@@ -86,32 +88,7 @@ export async function getPreSignedUrl({
     }
 }
 
-export async function uploadFileFromUrl({ fileUrl, userId, pfp, format = 'img' }: { fileUrl: string, userId?: string, pfp?: boolean, format?: 'img' | 'vid' }) {
-    try {
-        console.log('fileUrl', fileUrl)
-        const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
-        const fileBuffer = Buffer.from(response.data, 'binary');
-        const fileType = response.headers['content-type'];
-        const fileName = fileUrl.split('/').pop();
-        const size = fileBuffer.length;
-
-        const checkSum = crypto.createHash('sha256').update(fileBuffer).digest('hex');
-        const signedUrlResult = await getPreSignedUrl({ key: fileName, type: fileType, size, format, checkSum, userId, pfp });
-
-        if (!signedUrlResult.success) throw new Error('Failed to get signed URL');
-
-        await axios.put(signedUrlResult.success.url, fileBuffer, {
-            headers: { 'Content-Type': fileType, 'Content-Length': size },
-        });
-
-        return signedUrlResult.success.fileName;
-    } catch (error) {
-        console.error('Error uploading file from URL:', error);
-        throw error;
-    }
-}
-
-export async function deleteFile(name: string, s3: boolean = false) {
+export async function deleteFile(name: string, s3: boolean = true) {
     const { user } = await validateRequest()
     if (!user) throw new Error('Unauthorized')
 
