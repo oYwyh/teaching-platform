@@ -126,7 +126,7 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                   className={`${row.getValue('table') && 'cursor-pointer'}`}
                   onClick={() => {
-                    if (row.getValue('table')) {
+                    if (row.getValue('table') == 'course') {
                       return router.push('/dashboard/courses/' + row.getValue('id'));
                     }
                     return;

@@ -1,9 +1,12 @@
 'use server'
 
+import { tablesMap } from "@/constants/index.constant";
 import db from "@/lib/db";
 import { courseTable } from "@/lib/db/schema";
 import { TCreateSchema } from "@/schemas/course.schema";
 import { TIndex } from "@/types/index.type";
+import { sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function create(data: TCreateSchema) {
@@ -26,4 +29,26 @@ export async function create(data: TCreateSchema) {
     }).returning({ id: courseTable.id });
 
     return redirect(`/dashboard/courses/${course[0].id}`);
+}
+
+export async function updateItemOrder(
+    table: keyof typeof tablesMap,
+    items: { id: number; order: number }[],
+    courseId: number
+) {
+    const tableDefinition = tablesMap[table];
+
+    if (!tableDefinition) {
+        throw new Error("Invalid table name");
+    }
+
+    const updatePromises = items.map(item =>
+        db.update(tableDefinition)
+            .set({ order: item.order })
+            .where(sql`${tableDefinition.id} = ${item.id} AND ${tableDefinition.courseId} = ${courseId}`)
+    );
+
+    await Promise.all(updatePromises);
+
+    revalidatePath(`/dashboard/courses/${courseId}`);
 }

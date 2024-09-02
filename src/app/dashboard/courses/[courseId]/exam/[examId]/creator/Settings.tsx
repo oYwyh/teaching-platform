@@ -19,12 +19,8 @@ import { z } from "zod"
 
 export default function Settings({ exam, playlists }: { exam: TExam, playlists: TPlaylist[] }) {
     const [open, setOpen] = useState(false)
-    const [selectedPlaylists, setSelectedPlaylists] = useState<string[]>(exam.playlistIds.toString().split(','));
+    const [selectedPlaylists, setSelectedPlaylists] = useState<string[] | undefined>(exam.playlistIds ? exam.playlistIds.toString().split(',') : undefined);
     const [error, setError] = useState<string | undefined>();
-
-    useEffect(() => {
-        console.log(selectedPlaylists)
-    }, [selectedPlaylists])
 
     const settingsSchema = z.object({
         title: z.string(),

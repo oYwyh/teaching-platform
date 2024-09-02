@@ -57,6 +57,12 @@ export const instructorTable = pgTable("instructor", {
     ...timestamps(),
 });
 
+export const curriculumTable = pgTable("curriculum", {
+    id: serial("id").primaryKey(),
+    curriculum: text('curriculum').notNull(),
+    ...timestamps(),
+})
+
 export const regionTable = pgTable('region', {
     id: serial('id').primaryKey(),
     region: text('region').notNull(),
@@ -91,6 +97,7 @@ export const CourseStatuses = pgEnum("courseStatuses", ["published", "unpublishe
 export const ExamStatuses = pgEnum("examStatuses", ["published", "unpublished", 'scheduled', 'draft']);
 export const VideoStatuses = pgEnum("videoStatuses", ["published", "unpublished", 'scheduled']);
 export const FileStatuses = pgEnum("fileStatuses", ["published", "unpublished", 'scheduled']);
+export const LinkStatuses = pgEnum("linkStatuses", ["published", "unpublished", 'scheduled']);
 export const PlaylistStatuses = pgEnum("playlistStatuses", ["published", "unpublished", 'scheduled']);
 
 export const courseTable = pgTable("course", {
@@ -119,6 +126,7 @@ export const playlistTable = pgTable("playlist", {
     title: text("title").notNull(),
     description: text("description").notNull(),
     status: PlaylistStatuses('status').default('published').notNull(),
+    order: integer("order").notNull(),
     scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
     scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
     courseId: integer("courseId").references(() => courseTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
@@ -132,11 +140,12 @@ export const videoTable = pgTable("video", {
     video: text("video").notNull(),
     thumbnail: text("thumbnail").default('thumbnail.jpg').notNull(),
     status: VideoStatuses('status').default('published').notNull(),
+    order: integer("order").notNull(),
     viewCount: integer("viewCount").default(0).notNull(),
     scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
     scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
     courseId: integer("courseId").references(() => courseTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
-    playlistIds: text("playlistIds"),
+    playlistId: integer("playlistId").references(() => playlistTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp('updatedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
 })
@@ -148,7 +157,22 @@ export const fileTable = pgTable("file", {
     type: text("type").notNull(),
     size: integer("size").notNull(),
     status: FileStatuses('status').default('published').notNull(),
-    playlistIds: text("playlistIds"),
+    order: integer("order").notNull(),
+    playlistId: integer("playlistId").references(() => playlistTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    courseId: integer("courseId").references(() => courseTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+    scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
+    scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
+    releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+})
+
+export const linkTable = pgTable("link", {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    link: text("link").notNull(),
+    status: LinkStatuses('status').default('published').notNull(),
+    order: integer("order").notNull(),
+    playlistId: integer("playlistId").references(() => playlistTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     courseId: integer("courseId").references(() => courseTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
     scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
     scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
@@ -163,7 +187,8 @@ export const examTable = pgTable('exam', {
     duration: integer('duration').default(3600).notNull(),
     courseId: integer('courseId').references(() => courseTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
     status: ExamStatuses('status').default('published').notNull(),
-    playlistIds: text("playlistIds"),
+    order: integer("order").notNull(),
+    playlistId: integer("playlistId").references(() => playlistTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
     scheduledPublishDate: timestamp("scheduledPublishDate", { withTimezone: true, mode: "date" }),
     scheduledUnpublishDate: timestamp("scheduledUnpublishDate", { withTimezone: true, mode: "date" }),
     releasedAt: timestamp('releasedAt', { withTimezone: true, mode: "date" }).defaultNow().notNull(),
@@ -271,7 +296,8 @@ export const courseRelations = relations(courseTable, ({ one, many }) => ({
     playlist: many(playlistTable),
     videos: many(videoTable),
     files: many(fileTable),
-    exam: many(examTable),
+    exams: many(examTable),
+    links: many(linkTable),
 }))
 
 export const videoRelations = relations(videoTable, ({ one, many }) => ({
@@ -291,6 +317,14 @@ export const playlistRelations = relations(playlistTable, ({ one, many }) => ({
 export const fileRelations = relations(fileTable, ({ one }) => ({
     course: one(courseTable, {
         fields: [fileTable.courseId],
+        references: [courseTable.id]
+    }),
+}))
+
+
+export const linkRelations = relations(linkTable, ({ one }) => ({
+    course: one(courseTable, {
+        fields: [linkTable.courseId],
         references: [courseTable.id]
     }),
 }))

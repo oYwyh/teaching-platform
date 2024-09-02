@@ -11,9 +11,10 @@ export async function create(data: TCreateSchema, courseId: number) {
         title: data.title,
         description: data.description,
         status: data.status,
-        courseId: courseId
+        courseId: courseId,
+        order: 0
     })
 
     revalidatePath(`/dashboard/courses/${courseId}`)
-    return playlist
+    return playlist;
 }

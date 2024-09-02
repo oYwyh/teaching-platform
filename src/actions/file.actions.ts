@@ -5,22 +5,24 @@ import db from "@/lib/db";
 import { TPlaylist } from "@/types/index.type";
 import { revalidatePath } from "next/cache";
 import { fileTable } from "@/lib/db/schema";
+import { addToPlaylists } from "./index.actions";
 
 export async function add(data: TAddSchema, playlists: string[], courseId: number) {
-    const fileData: any = {
+    const baseFileData: any = {
         title: data.title,
         file: data.file,
         type: data.type,
         size: data.size,
         status: data.status,
         courseId: courseId,
+        order: 0
     };
 
-    if (playlists && playlists.length > 0) videoData.playlistIds = playlists;
-    if (data.scheduledPublishDate) fileData.scheduledPublishDate = data.scheduledPublishDate;
-    if (data.scheduledUnpublishDate) fileData.scheduledUnpublishDate = data.scheduledUnpublishDate;
+    if (data.scheduledPublishDate) baseFileData.scheduledPublishDate = data.scheduledPublishDate;
+    if (data.scheduledUnpublishDate) baseFileData.scheduledUnpublishDate = data.scheduledUnpublishDate;
 
-    await db.insert(fileTable).values(fileData).returning();
+    const results = await addToPlaylists('file', baseFileData, playlists, courseId);
 
-    return revalidatePath(`/dashboard/courses/${courseId}`)
+    revalidatePath(`/dashboard/courses/${courseId}`)
+    return results;
 }

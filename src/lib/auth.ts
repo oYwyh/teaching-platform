@@ -29,6 +29,7 @@ export const lucia = new Lucia(adapter, {
             regionId: attributes.regionId,
             governorateId: attributes.governorateId,
             picture: attributes.picture,
+            role: attributes.role
         };
     },
 });

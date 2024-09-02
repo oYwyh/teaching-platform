@@ -8,7 +8,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { courseContexts, courseStatuses, examStatuses, fileStatuses, governorates as governoratesConst, playlistStatuses, regions as regionsConst, specialties, studentContexts, subjectContexts, subjects as subjectsConst, videoStatuses, years as yearsConst } from "@/constants/index.constant";
+import { courseContexts, courseStatuses, curriculums, examStatuses, fileStatuses, governorates as governoratesConst, linkStatuses, playlistStatuses, regions as regionsConst, specialties, studentContexts, subjectContexts, subjects as subjectsConst, videoStatuses, years as yearsConst } from "@/constants/index.constant";
 import {
     Command,
     CommandDialog,
@@ -1209,6 +1209,154 @@ export default function FormField({
                                                                     )}
                                                                 />
                                                                 {status.value}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage>{fieldError?.message}</FormMessage>
+                                    </>
+                                )}
+                                {select == 'linkStatus' && (
+                                    <>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                        <Popover>
+                                            <PopoverTrigger disabled={disabled} asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        className={cn("w-[100%] justify-between", !value && "text-muted-foreground")}
+                                                    >
+                                                        {value
+                                                            ? linkStatuses?.find((status: any) => status?.value === value)?.value
+                                                            : "Select status"}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[100%] p-0" align="start">
+                                                <Command className="w-[100%]">
+                                                    <CommandInput placeholder="Search status..." />
+                                                    <CommandEmpty>No status found.</CommandEmpty>
+                                                    <CommandGroup className="overflow-y-scroll max-h-[200px]">
+                                                        {linkStatuses?.map((status: any) => (
+                                                            <CommandItem
+                                                                value={status.value}
+                                                                key={status.value}
+                                                                onSelect={() => {
+                                                                    field.onChange(status.value);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        status.value === value ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {status.value}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage>{fieldError?.message}</FormMessage>
+                                    </>
+                                )}
+                                {select == 'curriculum' && (
+                                    <>
+                                        <div className="flex flex-row gap-2 items-center mt-1">
+                                            {label == '' ? (
+                                                <></>
+                                            ) : (
+                                                <FormLabel className="capitalize" hidden={type == 'hidden' ? true : false}>{label ? label : name}</FormLabel>
+                                            )}
+                                            {optional && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger><CircleEllipsis size={15} color="gray" /></TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Optional Field</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                        <Popover>
+                                            <PopoverTrigger disabled={disabled} asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        className={cn("w-full justify-between", !value && "text-muted-foreground")}
+                                                    >
+                                                        {value ? curriculums.flat.concat(...Object.values(curriculums.nested).flat())
+                                                            .find(item => item.value === value)?.labelEn
+                                                            : "Select Curriculum"}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[250px] p-0" align="start">
+                                                <Command>
+                                                    {/* <CommandInput placeholder="Search curriculum..." /> */}
+                                                    <CommandEmpty>No curriculum found.</CommandEmpty>
+                                                    {Object.entries(curriculums.nested).map(([group, items]) => (
+                                                        <CommandGroup key={group} heading={group.charAt(0).toUpperCase() + group.slice(1)}>
+                                                            {items.map((item) => (
+                                                                <CommandItem
+                                                                    key={item.value}
+                                                                    value={item.value}
+                                                                    onSelect={() => {
+                                                                        field.onChange(item.value)
+                                                                    }}
+                                                                >
+                                                                    <Check
+                                                                        className={cn(
+                                                                            "mr-2 h-4 w-4",
+                                                                            item.value === value ? "opacity-100" : "opacity-0"
+                                                                        )}
+                                                                    />
+                                                                    {item.labelEn}
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
+                                                    ))}
+                                                    <CommandSeparator />
+                                                    <CommandGroup heading="Others">
+                                                        {curriculums.flat.map((item) => (
+                                                            <CommandItem
+                                                                key={item.value}
+                                                                value={item.value}
+                                                                onSelect={() => {
+                                                                    field.onChange(item.value)
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        item.value === value ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {item.labelEn}
                                                             </CommandItem>
                                                         ))}
                                                     </CommandGroup>

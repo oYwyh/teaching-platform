@@ -6,6 +6,7 @@ export const playlistStatuses = ['published', 'unpublished', 'scheduled'] as con
 export const videoStatuses = ['published', 'unpublished', 'scheduled'] as const
 export const examStatuses = ['published', 'unpublished', 'scheduled', 'draft'] as const
 export const fileStatuses = ['published', 'unpublished', 'scheduled'] as const
+export const linkStatuses = ['published', 'unpublished', 'scheduled'] as const
 export const courseStatuses = ['published', 'unpublished', 'scheduled'] as const
 export const courseContexts = ['school', 'englishExam'] as const
 export const subjectContexts = ['school', 'englishExam'] as const

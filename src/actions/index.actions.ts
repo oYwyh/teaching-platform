@@ -11,12 +11,18 @@ import {
     studentTable,
     instructorTable,
     courseTable,
-    subjectTable
+    subjectTable,
+    examTable,
+    linkTable,
+    fileTable,
+    videoTable,
+    playlistTable
 
 } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { validateRequest } from "@/lib/auth";
+import { tablesMap } from "@/constants/index.constant";
 
 export const uniqueColumnsValidations = async (data: any, userId?: string) => {
     const userColumns = [
@@ -338,17 +344,6 @@ export const getUser = async (): Promise<TFullUserData | null> => {
     }
 };
 
-
-const tablesMap = {
-    user: userTable,
-    region: regionTable,
-    governorate: governorateTable,
-    year: yearTable,
-    instructor: instructorTable,
-    course: courseTable,
-    subject: subjectTable,
-};
-
 const columnMap = {
     region: "region",
     governorate: "governorate",
@@ -397,4 +392,60 @@ export async function deleteAction(id: string | number | number[] | string[], ta
     } else {
         throw new Error("Deletion failed");
     }
+}
+
+export async function getNextOrder(table: keyof typeof tablesMap, courseId: number, playlistId?: number | null) {
+    const tableDefinition = tablesMap[table];
+
+    if (!tableDefinition) {
+        throw new Error("Invalid table name");
+    }
+
+    let query = db
+        .select({ order: sql<number>`MAX(${tableDefinition.order})` })
+        .from(tableDefinition)
+        .where(sql`${tableDefinition.courseId} = ${courseId}`);
+
+    if (playlistId !== undefined) {
+        query = query.where(playlistId === null
+            ? sql`${tableDefinition.playlistId} IS NULL`
+            : sql`${tableDefinition.playlistId} = ${playlistId}`
+        );
+    }
+
+    const result = await query;
+    return (result[0]?.order ?? 0) + 1;
+}
+
+export async function addToPlaylists(table: keyof typeof tablesMap, itemData: any, playlists: string[], courseId: number) {
+    const tableDefinition = tablesMap[table];
+
+    if (!tableDefinition) {
+        throw new Error("Invalid table name");
+    }
+
+    const results = [];
+
+    if (playlists.length > 0) {
+        for (const playlistId of playlists) {
+            const order = await getNextOrder(table, courseId, parseInt(playlistId, 10));
+            const result = await db.insert(tableDefinition).values({
+                ...itemData,
+                playlistId: parseInt(playlistId, 10),
+                order: order,
+                courseId: courseId
+            }).returning();
+            results.push(result);
+        }
+    } else {
+        const order = await getNextOrder(table, courseId, null);
+        const result = await db.insert(tableDefinition).values({
+            ...itemData,
+            order: order,
+            courseId: courseId
+        }).returning();
+        results.push(result);
+    }
+
+    return results;
 }

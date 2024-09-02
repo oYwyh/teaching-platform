@@ -5,6 +5,7 @@ import ThumbnailUploadBox from "@/app/dashboard/_components/ThumbnailUploadBox"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 import FormField from "@/components/ui/formField"
+import { useToast } from "@/components/ui/use-toast"
 import { computeSHA256 } from "@/lib/funcs"
 import { getPreSignedUrl } from "@/lib/r2"
 import { TQuestion } from "@/types/index.type"
@@ -30,6 +31,7 @@ export default function Canvas({ question }: ICanvasProps) {
     const questionSchema = z.object({
         question: z.string(),
     })
+    const { toast } = useToast()
 
     const questionForm = useForm<z.infer<typeof questionSchema>>({
         resolver: zodResolver(questionSchema),
@@ -38,17 +40,18 @@ export default function Canvas({ question }: ICanvasProps) {
     })
 
     const answerForm = useForm({
-        defaultValues: question.answers.reduce((acc, answer, index) => {
-            acc[`answer-${index}`] = answer.answer
+        defaultValues: question.answers.reduce((acc, answer) => {
+            acc[`answer-${answer.id}`] = answer.answer
             return acc
         }, {} as Record<string, any>)
     })
 
+
     useEffect(() => {
         questionForm.reset({ question: question.question })
         answerForm.reset(
-            question.answers.reduce((acc, answer, index) => {
-                acc[`answer-${index}`] = answer.answer
+            question.answers.reduce((acc, answer) => {
+                acc[`answer-${answer.id}`] = answer.answer
                 return acc
             }, {} as Record<string, any>)
         )
@@ -131,16 +134,22 @@ export default function Canvas({ question }: ICanvasProps) {
         await addAnswer(question.id)
     }
 
-    const handleRemoveAnswer = async (id: number) => {
-        await removeAnswer(id)
+    const handleRemoveAnswer = async (questionId: number, answerId: number) => {
+        const result = await removeAnswer(questionId, answerId)
+
+        if (result?.error) {
+            toast({
+                variant: "destructive",
+                title: "Uh oh! Something went wrong.",
+                description: "One answer at least is required.",
+            })
+        }
     }
 
-    const handleAnswerChange = async (data: any, index: number) => {
-        data['answer'] = data[`answer-${index}`]
-        await answerChange(data)
-        answerForm.reset({
-            [`answer-${index}`]: data['answer-' + index]
-        })
+    const handleAnswerChange = async (data: any, answerId: number) => {
+        const answerKey = `answer-${answerId}`;
+        data['answer'] = data[answerKey];
+        await answerChange({ ...data, id: answerId });
     }
 
     return (
@@ -154,30 +163,27 @@ export default function Canvas({ question }: ICanvasProps) {
                 <ThumbnailUploadBox thumbnail={image} setThumbnail={setImage} uploadProgress={uploadProgress} />
             </div>
             <div className={`grid w-full gap-4 grid-cols-2 ${question.type === 'written' && 'grid-cols-1'}`}>
-                {question.answers.sort((a, b) => a.id - b.id).map((answer, index) => {
+                {question.answers.sort((a, b) => a.id - b.id).map((answer) => {
+                    const answerKey = `answer-${answer.id}`;
                     return (
-                        <div className="flex flex-row gap-0">
-                            <div
-                                className={`
-                            flex items-center justify-between cursor-pointer rounded-sm w-full shadow-md px-3 py-5
-                            ${answer.isCorrect ? "bg-green-200" : "bg-red-200"}
-                        `}
+                        <div className="flex flex-row gap-0" key={answer.id}>
+                            <div className={`
+                                    flex items-center justify-between cursor-pointer rounded-sm w-full shadow-md px-3 py-5
+                                    ${answer.isCorrect ? "bg-green-200" : "bg-red-200"}
+                                `}
                             >
                                 <Form {...answerForm}>
-                                    <form>
+                                    <form onSubmit={(e) => e.preventDefault()}>
                                         <FormField form={answerForm} name="id" type="hidden" disabled transparent defaultValue={answer.id} />
-                                        <FormField form={answerForm} name={`answer-${index}`} transparent onUnFocus={() => handleAnswerChange(answerForm.getValues(), index)} label='' />
+                                        <FormField form={answerForm} name={answerKey} transparent onUnFocus={() => handleAnswerChange(answerForm.getValues(), answer.id)} label='' />
                                     </form>
                                 </Form>
-
-                                <div
-                                    onClick={() => question.type === 'choose' && handleSetIsCorrect(answer.isCorrect, answer.id)}
-                                >
+                                <div onClick={() => question.type === 'choose' && handleSetIsCorrect(answer.isCorrect, answer.id)}>
                                     {answer.isCorrect ? <Check color='green' /> : <X color="red" />}
                                 </div>
                             </div>
                             {question.type === 'choose' && (
-                                <Button variant="outline" className="rounded-sm shadow-md px-3 py-5 h-full bg-gray-100" onClick={() => handleRemoveAnswer(answer.id)}><Trash2 color="red" /></Button>
+                                <Button variant="outline" className="rounded-sm shadow-md px-3 py-5 h-full bg-gray-100" onClick={() => handleRemoveAnswer(question.id, answer.id)}><Trash2 color="red" /></Button>
                             )}
                         </div>
                     )

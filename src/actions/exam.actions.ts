@@ -3,24 +3,26 @@
 import db from "@/lib/db"
 import { answerTable, examTable, questionTable } from "@/lib/db/schema"
 import { deleteFile } from "@/lib/r2";
-import { ExamStatuses, QuestionTypes, TExam, TPlaylist } from "@/types/index.type";
+import { ExamStatuses, QuestionTypes, TAnswer, TExam, TPlaylist, TQuestion } from "@/types/index.type";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { addToPlaylists } from "./index.actions";
 
-export async function createExam(data: { title: string, description: string, scheduledPublishDate?: Date, scheduledUnpublishDate?: Date }, playlists: TPlaylist[], courseId: number) {
-    const examData: any = {
+export async function createExam(data: { title: string, description: string, scheduledPublishDate?: Date, scheduledUnpublishDate?: Date }, playlists: string[], courseId: number) {
+    const baseExamData: any = {
         title: data.title,
         description: data.description,
         status: 'draft',
         courseId: courseId,
+        order: 0
     };
 
-    if (playlists && playlists.length > 0) examData.playlistIds = playlists;
-    if (data.scheduledPublishDate) examData.scheduledPublishDate = data.scheduledPublishDate;
-    if (data.scheduledUnpublishDate) examData.scheduledUnpublishDate = data.scheduledUnpublishDate;
+    if (playlists && playlists.length > 0) baseExamData.playlistIds = playlists;
+    if (data.scheduledPublishDate) baseExamData.scheduledPublishDate = data.scheduledPublishDate;
+    if (data.scheduledUnpublishDate) baseExamData.scheduledUnpublishDate = data.scheduledUnpublishDate;
 
-    const exam = await db.insert(examTable).values(examData).returning();
+    const exam = await db.insert(examTable).values(baseExamData).returning();
 
     if (!exam) throw new Error("Something went wrong");
 
@@ -37,11 +39,13 @@ export async function createExam(data: { title: string, description: string, sch
         })
     }
 
+    await addToPlaylists('exam', baseExamData, playlists, courseId);
+
     revalidatePath(`/dashboard/courses/${courseId}`)
     redirect(`/dashboard/courses/${courseId}/exam/${exam[0].id}/creator`)
 }
 
-export async function updateExam(data: { title?: string, description?: string, scheduledPublishDate?: Date, scheduledUnpublishDate?: Date }, playlists: string[], examId: number) {
+export async function updateExam(data: { title?: string, description?: string, scheduledPublishDate?: Date, scheduledUnpublishDate?: Date }, playlists: string[] | undefined, examId: number) {
 
     const examData: any = {};
 
@@ -149,18 +153,61 @@ export async function addAnswer(questionId: number) {
     revalidatePath(`/dashboard/courses/[courseId]/exam/[examId]/creator`)
 }
 
-export async function removeAnswer(id: number) {
-    await db.delete(answerTable).where(eq(answerTable.id, id))
+export async function removeAnswer(questionId: number, answerId: number) {
 
-    revalidatePath(`/dashboard/courses/[courseId]/exam/[examId]/creator`)
+    const rawQuestion = await db
+        .select()
+        .from(questionTable)
+        .where(eq(questionTable.id, questionId))
+        .leftJoin(answerTable, eq(questionTable.id, answerTable.questionId));
+
+    const question = rawQuestion.reduce<{
+        question?: TQuestion;
+        answers: TAnswer[];
+    }>((acc, row) => {
+        if (!acc.question) {
+            acc.question = {
+                id: row.question.id,
+                question: row.question.question,
+                image: row.question.image,
+                examId: row.question.examId,
+                type: row.question.type as QuestionTypes,
+                createdAt: row.question.createdAt || new Date(),
+                updatedAt: row.question.updatedAt || new Date(),
+                answers: []
+            };
+        }
+        if (row.answer) {
+            acc.answers.push({
+                id: row.answer.id,
+                answer: row.answer.answer,
+                isCorrect: row.answer.isCorrect,
+                questionId: row.answer.questionId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
+        }
+        return acc;
+    }, { answers: [] });
+
+    if (question.answers.length == 1) {
+        return {
+            error: "Question must have at least one answer"
+        }
+    } else {
+        await db.delete(answerTable).where(eq(answerTable.id, answerId))
+
+        revalidatePath(`/dashboard/courses/[courseId]/exam/[examId]/creator`)
+    }
 }
 
 export async function answerChange(data: { id: number, answer: string }) {
+    console.log(data)
     await db.update(answerTable).set({
         answer: data.answer
     }).where(eq(answerTable.id, data.id))
 
-    revalidatePath(`/dashboard/courses/[courseId]/exam/[examId]/creator`)
+    revalidatePath(`/dashboard/courses/[courseId]/exam/[examId]/creator`, "layout")
 }
 
 export async function setDuration(time: number, examId: number) {

@@ -9,6 +9,7 @@ export type QuestionTypes = 'choose' | 'written' | 'trueOrFalse'
 export type PlaylistStatuses = 'published' | 'unpublished' | 'scheduled'
 export type ExamStatuses = 'published' | 'unpublished' | 'scheduled' | 'draft'
 export type FileStatuses = 'published' | 'unpublished' | 'scheduled'
+export type LinkStatuses = 'published' | 'unpublished' | 'scheduled'
 export type VideoStatuses = 'published' | 'unpublished' | 'scheduled'
 export type CourseStatuses = 'published' | 'unpublished' | 'scheduled'
 export type SubjectContexts = 'school' | 'englishExam'
@@ -111,7 +112,8 @@ export type TVideo = {
     thumbnail: string;
     viewCount: number;
     status: VideoStatuses;
-    playlistIds: number;
+    order: string;
+    playlistId: number;
     courseId: number;
     releasedAt: Date;
     updatedAt: Date;
@@ -125,9 +127,11 @@ export type TPlaylist = {
     description: string;
     courseId: number;
     status: PlaylistStatuses;
+    order: string;
     scheduledPublishDate: Date | null;
     scheduledUnpublishDate: Date | null;
     files: TFile[],
+    links: TLink[],
     videos: TVideo[],
     exams: TExam[],
 }
@@ -138,25 +142,38 @@ export type TFile = {
     file: string;
     type: string;
     size: number;
-    playlistIds: number;
+    order: string;
+    playlistId: number;
     courseId: number
     status: FileStatuses;
     scheduledPublishDate: Date | null;
     scheduledUnpublishDate: Date | null;
 }
 
+export type TLink = {
+    id: number;
+    title: string;
+    link: string;
+    playlistId: number;
+    courseId: number
+    status: LinkStatuses;
+    order: string;
+    scheduledPublishDate: Date | null;
+    scheduledUnpublishDate: Date | null;
+}
 export type TExam = {
     id: number;
     title: string;
     description: string;
     duration: number;
-    playlistIds: number;
+    playlistId: number;
     courseId: number;
     releasedAt: Date;
     updatedAt: Date;
     scheduledPublishDate: Date | null;
     scheduledUnpublishDate: Date | null;
     status: ExamStatuses;
+    order: string;
 }
 
 export type TQuestion = {

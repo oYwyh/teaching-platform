@@ -49,39 +49,47 @@ const getData = async (id: number) => {
         where: (examTable, { eq }) => eq(examTable.courseId, id)
     });
 
+    const links = await db.query.linkTable.findMany({
+        where: (linkTable, { eq }) => eq(linkTable.courseId, id)
+    });
+
     const playlists = await db.query.playlistTable.findMany({
         where: (playlistTable, { eq }) => eq(playlistTable.courseId, id),
     });
 
     // Group videos and files by playlistIds
     playlists.forEach((playlist) => {
-        playlist.videos = videos.filter((video) => video.playlistIds?.split(',').map(Number).includes(playlist.id));
-        playlist.files = files.filter((file) => file.playlistIds?.split(',').map(Number).includes(playlist.id));
-        playlist.exams = exams.filter((exam) => exam.playlistIds?.split(',').map(Number).includes(playlist.id));
+        playlist.videos = videos.filter((video) => video.playlistId == playlist.id);
+        playlist.files = files.filter((file) => file.playlistId == playlist.id);
+        playlist.exams = exams.filter((exam) => exam.playlistId == playlist.id);
+        playlist.links = links.filter((link) => link.playlistId == playlist.id);
     });
 
-    const videosWithoutPlaylist = videos.filter(video => !video.playlistIds);
-    const filesWithoutPlaylist = files.filter(file => !file.playlistIds);
-    const examsWithoutPlaylist = exams.filter(exam => !exam.playlistIds);
+    const videosWithoutPlaylist = videos.filter(video => !video.playlistId);
+    const filesWithoutPlaylist = files.filter(file => !file.playlistId);
+    const examsWithoutPlaylist = exams.filter(exam => !exam.playlistId);
+    const linksWithoutPlaylist = links.filter(link => !link.playlistId);
 
     return {
         course,
         videos: videosWithoutPlaylist,
         playlists,
         files: filesWithoutPlaylist,
+        links: linksWithoutPlaylist,
         exams: examsWithoutPlaylist
     };
 };
 
 
 export default async function coursePage({ params: { courseId } }: { params: { courseId: number } }) {
-    const { course, videos, playlists, files, exams } = await getData(courseId);
+    const { course, videos, playlists, links, files, exams } = await getData(courseId);
 
     if (!course) throw new Error('Course not found');
 
     console.log(`playlists`, playlists)
     console.log(`videos`, videos)
     console.log(`files`, files)
+    console.log(`links`, links)
     console.log(`exams`, exams)
     console.log(`playlists[0]`, playlists[0])
 
@@ -92,7 +100,7 @@ export default async function coursePage({ params: { courseId } }: { params: { c
                 course={course}
             />
             {/* Right Side: Video Placeholders */}
-            <Content videos={videos} playlists={playlists} files={files} exams={exams} courseId={courseId} />
+            <Content videos={videos} playlists={playlists} files={files} links={links} exams={exams} courseId={courseId} />
         </div>
     );
 }

@@ -5,23 +5,26 @@ import { videoTable } from "@/lib/db/schema";
 import { TAddSchema } from "@/schemas/video.schema";
 import { TPlaylist, TVideo, VideoStatuses } from "@/types/index.type";
 import { revalidatePath } from "next/cache";
+import { addToPlaylists } from "./index.actions";
 
-export async function add(data: TAddSchema, playlists: TPlaylist[], courseId: number) {
-    const videoData: any = {
+export async function add(data: TAddSchema, playlists: string[], courseId: number) {
+
+    const baseVideoData: any = {
         title: data.title,
         description: data.description,
         status: data.status,
         viewCount: 0,
         courseId: courseId,
+        order: 0
     };
 
-    if (playlists && playlists.length > 0) videoData.playlistIds = playlists;
-    if (data.video) videoData.video = data.video;
-    if (data.thumbnail) videoData.thumbnail = data.thumbnail;
-    if (data.scheduledPublishDate) videoData.scheduledPublishDate = data.scheduledPublishDate;
-    if (data.scheduledUnpublishDate) videoData.scheduledUnpublishDate = data.scheduledUnpublishDate;
+    if (data.video) baseVideoData.video = data.video;
+    if (data.thumbnail) baseVideoData.thumbnail = data.thumbnail;
+    if (data.scheduledPublishDate) baseVideoData.scheduledPublishDate = data.scheduledPublishDate;
+    if (data.scheduledUnpublishDate) baseVideoData.scheduledUnpublishDate = data.scheduledUnpublishDate;
 
-    await db.insert(videoTable).values(videoData).returning();
+    const results = await addToPlaylists('video', baseVideoData, playlists, courseId);
 
-    return revalidatePath(`/dashboard/courses/${courseId}`)
+    revalidatePath(`/dashboard/courses/${courseId}`)
+    return results;
 }
